@@ -1,12 +1,12 @@
 	(1)
 VARIABLES	police_stations
 	
-log_WSF19POP17	1.984***
-	(0.460)
-Constant	-14.79***
-	(5.462)
+log_WSF19POP17	2.101***
+	(0.507)
+Constant	-16.21***
+	(6.043)
 	
-Observations	133
-R-squared	0.124
+Observations	132
+R-squared	0.117
 Standard errors in parentheses	
 *** p<0.01, ** p<0.05, * p<0.1	

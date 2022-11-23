@@ -1,12 +1,12 @@
 	(1)
 VARIABLES	health_facilities
 	
-log_WSF19POP17	2.823***
-	(0.532)
-Constant	-23.68***
-	(6.316)
+log_WSF19POP17	3.082***
+	(0.585)
+Constant	-26.80***
+	(6.966)
 	
-Observations	133
-R-squared	0.177
+Observations	132
+R-squared	0.176
 Standard errors in parentheses	
 *** p<0.01, ** p<0.05, * p<0.1	

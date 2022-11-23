@@ -77,6 +77,7 @@ glo admin_fac "p8q051"
 recode $admin_fac (1=1 "Yes") (2=0 "No"), gen(police_stations)
 
 tab police_stations,m
+*-------------------------------------------------------------------------------
 
 
 *-------------------------------------------------------------------------------
@@ -88,9 +89,9 @@ collapse (sum) *_education_boys *_education_girls health_facilities police_stati
 *collapse (sum) *_education_boys *_education_girls , by(tehsil)
 *Total educational institutions for boys and girls per tehsil - SInce we have total population without gender disaggregation
 
-egen edu_inst_tot = rowtotal(p4q1111_education_boys-p4q1261_education_girls)    //*coeff estimate is high due to high total
-*Only primary	
-*egen edu_inst_tot = rowtotal(p4q1111_education_boys p4q1211_education_girls)
+* edu_inst_tot = rowtotal(p4q1111_education_boys-p4q1261_education_girls)    //*coeff estimate is high due to high total
+*Only primary Schools	
+egen edu_inst_tot = rowtotal(p4q1111_education_boys p4q1211_education_girls)
 label var edu_inst_tot "Total of all educational institutions - Tehsil level"
 
 *For regressions, taking tehsil level sums of Hospitals/Dispensary in tehsils
