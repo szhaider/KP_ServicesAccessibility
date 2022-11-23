@@ -1,0 +1,792 @@
+{smcl}
+{com}{sf}{ul off}{txt}{.-}
+      name:  {res}<unnamed>
+       {txt}log:  {res}C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/log/logfile.smcl
+  {txt}log type:  {res}smcl
+ {txt}opened on:  {res}22 Nov 2022, 23:33:19
+{txt}
+{com}. *-------------------------------------------------------------------------------
+. *-------------------------------------------------------------------------------
+.         
+. 
+. * A.4. Calling required Do files 
+. 
+. *Data Preparation from Mouza Census 2020
+.         do                      "$do/MouzaDataPrep.do"
+{txt}
+{com}. 
+. 
+. *Cleaning and preparing Mouza Census 2020
+. 
+. import excel "$data/MICRO DATA OF MOUZA CENSUS - 2020.xlsx", sheet("Sheet1") firstrow case(lower) clear
+{res}{text}(226 vars, 9,775 obs)
+
+{com}. 
+. *Labeling the data 
+. foreach var of varlist sr-p9q0227 {c -(}
+{txt}  2{com}.     
+.         di `var'[1]
+{txt}  3{com}.         global temp  = `var'[1]
+{txt}  4{com}.     label variable `var' "$temp"
+{txt}  5{com}. {c )-}
+Sr. #
+Name of District
+Name of Tehsil
+Name of Village
+Status of Mouza 1-Rural 2-Urban 3-Partly Urban  4-Forest 5-UnPopulated
+Total Number of Settlements in Area of the Mouza
+Wheat
+Rice
+Cotton
+Sugarcane
+Maize
+Pulses
+Orchard
+Vegetables
+Canal
+Rive
+Tubwell/Well
+Ravine/Stream
+Spring/Karez
+Arid 
+Flooding Torrent
+Others
+Water Course Improvement Scheme Canal Irrigation 1-Yes 2-No In Case Of Yes
+Total Number of Water Courses
+Number of Improved Water Courses
+Total Length of Improved Water Courses (Meters)
+Use of Modren Tech. for 1-Irrigation Drip System No
+Sprinkler System No
+Others (Specify) No
+None
+Depth of Water Table in Mouza
+Construction Type of Majority of Houses 1-Bricked  2-Mud Made 3-Bricks & Mud 4-Others
+{txt}note: label truncated to 80 characters
+Status Type of Majority of Streets 1-Metaled 2-Cemented/Concret 3-Bricked/Soling 4-Dirt Roads
+note: label truncated to 80 characters
+Yes In Case of “Yes” the Waste Management 2-Government 2-Private
+No 
+Taste of Underground Water 1-Sweet
+Brakish In Case of “Brakish” Distance travelled to get Sweet Water Kilometer
+Source of Drinking Water (Sweet Water) 1-Govt. Piped Supply
+Personal Hand/ Electric Pump
+Water Filtration Plant
+Revers Osmosis Plant
+Hand/Electric Pump on nearby Canal
+Well
+River/Canal
+Spring/Ravine/ Karez
+Pond/Toba
+Others (Specify)
+Toilet Facility in Majority of Houses 1-Inside the House 2-Open Place
+Sewerage System in Mouza 1-Cemented Drain 1-All 2-Mostly 3-Same 4-None
+Sewerage System 1-All 2-Mostly 3-Same 4-None
+Population Welfare Centre Yes
+Population Welfare Centre No
+Basic Health Unit Yes
+Basic Health Unit No
+Rural Health Centre Yes
+Rural Health Centre No
+NGO Dispensary Yes
+NGO Dispensary No
+Child/Mother Care Centre Yes
+Child/Mother Care Centre No
+Private Doctor (MBBS) Yes
+Private Doctor (MBBS) No
+spital/Dispensary Yes
+spital/Dispensary No
+acility of Midwife Yes
+acility of Midwife No
+Educational Institutions in Mouza In Case of “No” write Distance  in KM 1-Boys 1-Primary 1-Yes
+note: label truncated to 80 characters
+Educational Institutions in Mouza In Case of “No” write Distance  in KM 1-Boys 1-Primary 2-No Distance
+note: label truncated to 80 characters
+Educational Institutions in Mouza In Case of “No” write Distance  in KM 1-Boys 2-Middle 1-Yes
+note: label truncated to 80 characters
+Educational Institutions in Mouza In Case of “No” write Distance  in KM 1-Boys 2-Middle 2-No Distance
+note: label truncated to 80 characters
+Educational Institutions in Mouza In Case of “No” write Distance  in KM 1-Boys 3-High/Higher Secondary 1-Yes
+note: label truncated to 80 characters
+Educational Institutions in Mouza In Case of “No” write Distance  in KM 1-Boys 3-High/Higher Secondary 2-No Distance
+note: label truncated to 80 characters
+Educational Institutions in Mouza In Case of “No” write Distance  in KM 1-Boys 4-College  1-Yes
+note: label truncated to 80 characters
+Educational Institutions in Mouza In Case of “No” write Distance  in KM 1-Boys 4-College  2-No Distance
+note: label truncated to 80 characters
+Educational Institutions in Mouza In Case of “No” write Distance  in KM 1-Boys 5-Vocational Institute  1-Yes
+note: label truncated to 80 characters
+Educational Institutions in Mouza In Case of “No” write Distance  in KM 1-Boys 5-Vocational Institute  2-No Distance
+note: label truncated to 80 characters
+Educational Institutions in Mouza In Case of “No” write Distance  in KM 1-Boys 6-Religious Institute Institute  1-Yes
+note: label truncated to 80 characters
+Educational Institutions in Mouza In Case of “No” write Distance  in KM 1-Boys 6-Religious Institute Institute  2-No Distance
+note: label truncated to 80 characters
+Educational Institutions in Mouza In Case of “No” write Distance  in KM 1-Girls 1-Primary 1-Yes
+note: label truncated to 80 characters
+Educational Institutions in Mouza In Case of “No” write Distance  in KM 1-Girls 1-Primary 2-No Distance
+note: label truncated to 80 characters
+Educational Institutions in Mouza In Case of “No” write Distance  in KM 1-Girls 2-Middle 1-Yes
+note: label truncated to 80 characters
+Educational Institutions in Mouza In Case of “No” write Distance  in KM 1-Girls 2-Middle 2-No Distance
+note: label truncated to 80 characters
+Educational Institutions in Mouza In Case of “No” write Distance  in KM 1-Girls 3-High/Higher Secondary 1-Yes
+note: label truncated to 80 characters
+Educational Institutions in Mouza In Case of “No” write Distance  in KM 1-Girls 3-High/Higher Secondary 2-No Distance
+note: label truncated to 80 characters
+Educational Institutions in Mouza In Case of “No” write Distance  in KM 1-Girls 4-College  1-Yes
+note: label truncated to 80 characters
+Educational Institutions in Mouza In Case of “No” write Distance  in KM 1-Girls 4-College  2-No Distance
+note: label truncated to 80 characters
+Educational Institutions in Mouza In Case of “No” write Distance  in KM 1-Girls 5-Vocational Institute  1-Yes
+note: label truncated to 80 characters
+Educational Institutions in Mouza In Case of “No” write Distance  in KM 1-Girls 5-Vocational Institute  2-No Distance
+note: label truncated to 80 characters
+Educational Institutions in Mouza In Case of “No” write Distance  in KM 1-Girls 6-Religious Institute Institute  1-Yes
+note: label truncated to 80 characters
+Educational Institutions in Mouza In Case of “No” write Distance  in KM 1-Girls 6-Religious Institute Institute  2-No Distance
+note: label truncated to 80 characters
+Regular Playgrounds in Mouza 1-Male 1-Cricket
+Regular Playgrounds in Mouza 1-Male 2-Hockey 
+Regular Playgrounds in Mouza 1-Male 3-Foot Ball
+Regular Playgrounds in Mouza 1-Male 4-Volley Ball 
+Regular Playgrounds in Mouza 1-Male 5-Kabaddy 
+Regular Playgrounds in Mouza 1-Male 6-Any Other Sports
+Regular Playgrounds in Mouza 1-Male 7-None
+Regular Playgrounds in Mouza 1-Female 1-Cricket
+Regular Playgrounds in Mouza 1-Female 2-Hockey 
+Regular Playgrounds in Mouza 1-Female 3-Foot Ball
+Regular Playgrounds in Mouza 1-Female 4-Volley Ball 
+Regular Playgrounds in Mouza 1-Female 5-Kabaddy 
+Regular Playgrounds in Mouza 1-Female 6-Any Other Sports
+Regular Playgrounds in Mouza 1-Female 7-None
+Vet. Health Care Facility in Mouza In Case of “No” write Distance in KM 1-Dispensary/Veterinary Centre 1-Yes
+note: label truncated to 80 characters
+Vet. Health Care Facility in Mouza In Case of “No” write Distance in KM 1-Dispensary/Veterinary Centre 2-No Distance
+note: label truncated to 80 characters
+Vet. Health Care Facility in Mouza In Case of “No” write Distance in KM 2-Private Facility 1-Yes
+note: label truncated to 80 characters
+Vet. Health Care Facility in Mouza In Case of “No” write Distance in KM 2-Private Facility 2-No Distance
+note: label truncated to 80 characters
+Vet. Health Care Facility in Mouza In Case of “No” write Distance in KM 3-Mobile Veterinary Dispenser
+note: label truncated to 80 characters
+Number of Farms in Mouza Premises 1-None
+Number of Farms in Mouza Premises 2-ultry Farms 
+Number of Farms in Mouza Premises 3-Livestock/Dairy Farms
+Number of Farms in Mouza Premises 4-Fish Farms
+Availability of Electricity to Inhabitants of Mouza 1.All
+Mostly
+Alternate Sources of Electricity  1.Solar Enery
+Bio Gas
+Generator
+Others (Specify)
+None
+Fuel Availability for Mouza 1. Sui Gass
+LPG
+Kerosene Oil
+Wood
+Coal
+Coal
+Road Facility to Mouza 1. Metaled
+Cemented/ Concrete
+Media Sources in Mouza 1. Radio
+TV
+Cable
+Newspaper
+None
+Market/Bazar in Mouza 1. Yes
+No
+Cold Storage for Fruits/Vegetables 1. Yes
+No
+Govt. Procurement Centre 1. Yes
+No
+Workshop for Agricultural Machinery Repair 1. Yes
+No
+Diesel/Petrol Pump/Depot/Agency 1. Yes
+No
+Transport Facility to Mouza 1. Yes
+No
+CNG/LPG Facility 1. Yes
+No
+Wholesale Market 1-Livestock 1. Yes 
+No
+Grains 1. Yea
+No
+Fruits/ Vegetables 1, Yes
+No
+Telephone Facility 1. Fixed Line 1. Yes
+NO
+PCO 1. Yes
+No
+Mobile Signals 1. Yes
+No
+Depot/Agency/ Shop 1. Fertilizers 1.Yes
+No
+Seeds 1. Yes
+No
+Pesticides 1. yes
+No
+nternet Facility 1. Fixed Line DSL 1.Yes
+No
+Cable Net 1. Yes 
+No
+Mobile Net 1. Yes 
+NO
+Community Grazing Land in Mouza 1. Yes
+No
+Community Forest in Mouza 1. Yes
+No
+Natural Disaster Faced in Last 05 Years by Mouza 1. Yes
+No In Case of “Yes” Mark  the Relevant Box 1. Drought
+Flood
+Earthquake
+Others (Specify)
+Sources of Credit in Mouza 1. ZTBL
+Cooperative Bank
+Commercial Bank
+Micro Finance Bank
+NGO
+RSP
+Govt
+Broker
+Others 
+Online Commercial Banks in Mouza 1. Yes
+No In Case of “No” write distance in Kilometer
+Reconciliation Committee in Mouza 1. Yes
+No In Case of “No” write distance in Kilometer
+Post Office in Mouza 1.Yes
+No In Case of “No” write distance in Kilometer
+Police Station/Police Post in Mouza
+No In Case of “No” write distance in Kilometer
+NGOs in Mouza 1. Male . NGO
+Community Org
+Citizen Commounity Board
+Community Centre/Library
+None
+Female NGO
+Community Org
+Citizen Commounity Board
+Community Centre/Library
+None
+ndustries in Mouza 1. Large Scale
+Medium Scale
+Small Scale
+Cottage Industries
+None
+Sources of Employment of Populace 1. Male 1. Service 1. Mostly 2. Some 3. None
+Sources of Employment of Populace 1. Male 2. Agriculture 1. Mostly 2. Some 3. None
+note: label truncated to 80 characters
+Sources of Employment of Populace 1. Male 3. Trade 1. Mostly 2. Some 3. None
+Sources of Employment of Populace 1. Male 4. Industry 1. Mostly 2. Some 3. None
+Sources of Employment of Populace 1. Male 5. Personal Business 1. Mostly 2. Some 3. None
+note: label truncated to 80 characters
+Sources of Employment of Populace 1. Male 6. Overseas Employment 1. Mostly 2. Some 3. None
+note: label truncated to 80 characters
+Sources of Employment of Populace 1. Male 7. Labour 1. Mostly 2. Some 3. None
+Sources of Employment of Populace 2. Female 1. Service 1. Mostly 2. Some 3. None
+Sources of Employment of Populace 2. Female 2. Agriculture 1. Mostly 2. Some 3. None
+note: label truncated to 80 characters
+Sources of Employment of Populace 2.Female 3. Trade 1. Mostly 2. Some 3. None
+Sources of Employment of Populace 2. Female 4. Industry 1. Mostly 2. Some 3. None
+note: label truncated to 80 characters
+Sources of Employment of Populace 2. Female 5. Personal Business 1. Mostly 2. Some 3. None
+note: label truncated to 80 characters
+Sources of Employment of Populace 2. Female 6. Overseas Employment 1. Mostly 2. Some 3. None
+note: label truncated to 80 characters
+Sources of Employment of Populace 2. Female 7. Labour 1. Mostly 2. Some 3. None
+
+{com}. 
+. 
+. drop if _n == 1 | _n == 2
+{txt}(2 observations deleted)
+
+{com}. drop sr
+{txt}
+{com}. 
+. foreach var of varlist p1q09-p9q0227{c -(}
+{txt}  2{com}.     destring `var', replace
+{txt}  3{com}. {c )-}
+{txt}p1q09: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}p1q10: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(15 missing values generated)
+{res}{txt}p2q011: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(1767 missing values generated)
+{res}{txt}p2q012: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(8403 missing values generated)
+{res}{txt}p2q013: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9698 missing values generated)
+{res}{txt}p2q014: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(8828 missing values generated)
+{res}{txt}p2q015: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(1878 missing values generated)
+{res}{txt}p2q016: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9423 missing values generated)
+{res}{txt}p2q017: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(7997 missing values generated)
+{res}{txt}p2q018: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(6629 missing values generated)
+{res}{txt}p2q021: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(7571 missing values generated)
+{res}{txt}p2q022: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9238 missing values generated)
+{res}{txt}p2q023: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(8347 missing values generated)
+{res}{txt}p2q024: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(6923 missing values generated)
+{res}{txt}p2q025: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(8004 missing values generated)
+{res}{txt}p2q026: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(4293 missing values generated)
+{res}{txt}p2q027: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9477 missing values generated)
+{res}{txt}p2q028: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9652 missing values generated)
+{res}{txt}p2q03: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(42 missing values generated)
+{res}{txt}p2q031: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9053 missing values generated)
+{res}{txt}p2q032: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9098 missing values generated)
+{res}{txt}p2q033: all characters numeric; {res}replaced {txt}as {res}long
+{txt}(9099 missing values generated)
+{res}{txt}p2q041: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9488 missing values generated)
+{res}{txt}p2q042: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9754 missing values generated)
+{res}{txt}p2q043: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9721 missing values generated)
+{res}{txt}p2q044: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(372 missing values generated)
+{res}{txt}p2q05: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(45 missing values generated)
+{res}{txt}p3q01: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(91 missing values generated)
+{res}{txt}p3q02: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(93 missing values generated)
+{res}{txt}p3q031: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(89 missing values generated)
+{res}{txt}p3q032: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9281 missing values generated)
+{res}{txt}p3q041: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(84 missing values generated)
+{res}{txt}p3q042: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(9366 missing values generated)
+{res}{txt}p3q0501: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(7326 missing values generated)
+{res}{txt}p3q0502: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(6571 missing values generated)
+{res}{txt}p3q0503: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9687 missing values generated)
+{res}{txt}p3q0504: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9759 missing values generated)
+{res}{txt}p3q0505: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9434 missing values generated)
+{res}{txt}p3q0506: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(6562 missing values generated)
+{res}{txt}p3q0507: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(8786 missing values generated)
+{res}{txt}p3q0508: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(5004 missing values generated)
+{res}{txt}p3q0509: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9427 missing values generated)
+{res}{txt}p3q0510: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9613 missing values generated)
+{res}{txt}p3q06: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(97 missing values generated)
+{res}{txt}p3q071: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(87 missing values generated)
+{res}{txt}p3q072: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(87 missing values generated)
+{res}{txt}p3q0811: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(93 missing values generated)
+{res}{txt}p3q0812: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(93 missing values generated)
+{res}{txt}p3q0821: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(93 missing values generated)
+{res}{txt}p3q0822: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(93 missing values generated)
+{res}{txt}p3q0831: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(93 missing values generated)
+{res}{txt}p3q0832: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(93 missing values generated)
+{res}{txt}p3q0841: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(93 missing values generated)
+{res}{txt}p3q0842: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(93 missing values generated)
+{res}{txt}p3q0851: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(93 missing values generated)
+{res}{txt}p3q0852: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(93 missing values generated)
+{res}{txt}p3q0861: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(93 missing values generated)
+{res}{txt}p3q0862: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(93 missing values generated)
+{res}{txt}p3q0871: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(93 missing values generated)
+{res}{txt}p3q0872: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(93 missing values generated)
+{res}{txt}p3q0881: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(94 missing values generated)
+{res}{txt}p3q0882: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(94 missing values generated)
+{res}{txt}p4q1111: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(94 missing values generated)
+{res}{txt}p4q1112: contains nonnumeric characters; no {res}replace
+{txt}p4q1121: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(96 missing values generated)
+{res}{txt}p4q1122: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(96 missing values generated)
+{res}{txt}p4q1131: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(94 missing values generated)
+{res}{txt}p4q1132: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(94 missing values generated)
+{res}{txt}p4q1141: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(94 missing values generated)
+{res}{txt}p4q1142: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(94 missing values generated)
+{res}{txt}p4q1151: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(94 missing values generated)
+{res}{txt}p4q1152: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(94 missing values generated)
+{res}{txt}p4q1161: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(93 missing values generated)
+{res}{txt}p4q1162: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(93 missing values generated)
+{res}{txt}p4q1211: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(94 missing values generated)
+{res}{txt}p4q1212: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(94 missing values generated)
+{res}{txt}p4q1221: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(95 missing values generated)
+{res}{txt}p4q1222: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(95 missing values generated)
+{res}{txt}p4q1231: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(94 missing values generated)
+{res}{txt}p4q1232: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(94 missing values generated)
+{res}{txt}p4q1241: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(94 missing values generated)
+{res}{txt}p4q1242: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(94 missing values generated)
+{res}{txt}p4q1251: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(95 missing values generated)
+{res}{txt}p4q1252: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(95 missing values generated)
+{res}{txt}p4q1261: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(93 missing values generated)
+{res}{txt}p4q1262: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(93 missing values generated)
+{res}{txt}p4q0211: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9090 missing values generated)
+{res}{txt}p4q0212: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9712 missing values generated)
+{res}{txt}p4q0213: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9465 missing values generated)
+{res}{txt}p4q0214: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9458 missing values generated)
+{res}{txt}p4q0215: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9704 missing values generated)
+{res}{txt}p4q0216: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9719 missing values generated)
+{res}{txt}p4q0217: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(919 missing values generated)
+{res}{txt}p4q0221: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9767 missing values generated)
+{res}{txt}p4q0222: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9770 missing values generated)
+{res}{txt}p4q0223: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9769 missing values generated)
+{res}{txt}p4q0224: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9766 missing values generated)
+{res}{txt}p4q0225: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9767 missing values generated)
+{res}{txt}p4q0226: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9762 missing values generated)
+{res}{txt}p4q0227: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(116 missing values generated)
+{res}{txt}p5q0111: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(93 missing values generated)
+{res}{txt}p5q0112: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(93 missing values generated)
+{res}{txt}p5q0121: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(94 missing values generated)
+{res}{txt}p5q0122: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(94 missing values generated)
+{res}{txt}p5q013: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(91 missing values generated)
+{res}{txt}p5q021: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(1522 missing values generated)
+{res}{txt}p5q022: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(8372 missing values generated)
+{res}{txt}p5q023: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(8475 missing values generated)
+{res}{txt}p5q024: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(8470 missing values generated)
+{res}{txt}p6q011: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(95 missing values generated)
+{res}{txt}p6q012: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(7517 missing values generated)
+{res}{txt}p6q021: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(3812 missing values generated)
+{res}{txt}p6q022: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9700 missing values generated)
+{res}{txt}p6q023: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(8006 missing values generated)
+{res}{txt}p6q024: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9578 missing values generated)
+{res}{txt}p6q025: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(7062 missing values generated)
+{res}{txt}p6q031: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(8917 missing values generated)
+{res}{txt}p6q032: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(7618 missing values generated)
+{res}{txt}p6q033: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9242 missing values generated)
+{res}{txt}p6q034: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(572 missing values generated)
+{res}{txt}p6q035: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9516 missing values generated)
+{res}{txt}p6q036: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(5906 missing values generated)
+{res}{txt}p6q041: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(93 missing values generated)
+{res}{txt}p6q042: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(4830 missing values generated)
+{res}{txt}p6q051: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(2295 missing values generated)
+{res}{txt}p6q052: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(4204 missing values generated)
+{res}{txt}p6q053: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9105 missing values generated)
+{res}{txt}p6q054: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(7547 missing values generated)
+{res}{txt}p6q055: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9077 missing values generated)
+{res}{txt}p6q061: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(89 missing values generated)
+{res}{txt}p6q062: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(89 missing values generated)
+{res}{txt}p6q071: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(89 missing values generated)
+{res}{txt}p6q072: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(89 missing values generated)
+{res}{txt}p6q081: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(89 missing values generated)
+{res}{txt}p6q082: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(89 missing values generated)
+{res}{txt}p6q091: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(89 missing values generated)
+{res}{txt}p6q092: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(89 missing values generated)
+{res}{txt}p6q101: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(89 missing values generated)
+{res}{txt}p6q102: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(89 missing values generated)
+{res}{txt}p6q111: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(89 missing values generated)
+{res}{txt}p6q112: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(89 missing values generated)
+{res}{txt}p6q121: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(90 missing values generated)
+{res}{txt}p6q122: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(90 missing values generated)
+{res}{txt}p6q1311: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(91 missing values generated)
+{res}{txt}p6q1312: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(91 missing values generated)
+{res}{txt}p6q1321: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(92 missing values generated)
+{res}{txt}p6q1322: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(92 missing values generated)
+{res}{txt}p6q1331: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(92 missing values generated)
+{res}{txt}p6q1332: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(92 missing values generated)
+{res}{txt}p6q1411: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(91 missing values generated)
+{res}{txt}p6q1412: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(91 missing values generated)
+{res}{txt}p6q1421: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(92 missing values generated)
+{res}{txt}p6q1422: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(92 missing values generated)
+{res}{txt}p6q1431: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(92 missing values generated)
+{res}{txt}p6q1432: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(92 missing values generated)
+{res}{txt}p6q1511: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(91 missing values generated)
+{res}{txt}p6q1512: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(91 missing values generated)
+{res}{txt}p6q1521: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(92 missing values generated)
+{res}{txt}p6q1522: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(92 missing values generated)
+{res}{txt}p6q1531: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(92 missing values generated)
+{res}{txt}p6q1532: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(92 missing values generated)
+{res}{txt}p6q1611: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(92 missing values generated)
+{res}{txt}p6q1612: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(92 missing values generated)
+{res}{txt}p6q1621: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(92 missing values generated)
+{res}{txt}p6q1622: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(92 missing values generated)
+{res}{txt}p6q1631: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(91 missing values generated)
+{res}{txt}p6q1632: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(91 missing values generated)
+{res}{txt}p7q011: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(89 missing values generated)
+{res}{txt}p7q012: all characters numeric; {res}replaced {txt}as {res}long
+{txt}(89 missing values generated)
+{res}{txt}p7q021: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(88 missing values generated)
+{res}{txt}p7q022: all characters numeric; {res}replaced {txt}as {res}long
+{txt}(88 missing values generated)
+{res}{txt}p7q031: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(87 missing values generated)
+{res}{txt}p7q0321: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(8584 missing values generated)
+{res}{txt}p7q0322: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(8667 missing values generated)
+{res}{txt}p7q0323: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(7860 missing values generated)
+{res}{txt}p7q0324: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9269 missing values generated)
+{res}{txt}p8q011: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(6270 missing values generated)
+{res}{txt}p8q012: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9633 missing values generated)
+{res}{txt}p8q013: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(8639 missing values generated)
+{res}{txt}p8q014: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9584 missing values generated)
+{res}{txt}p8q015: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9593 missing values generated)
+{res}{txt}p8q016: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9702 missing values generated)
+{res}{txt}p8q017: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9523 missing values generated)
+{res}{txt}p8q018: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(8883 missing values generated)
+{res}{txt}p8q019: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(4577 missing values generated)
+{res}{txt}p8q021: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(91 missing values generated)
+{res}{txt}p8q022: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(91 missing values generated)
+{res}{txt}p8q031: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(91 missing values generated)
+{res}{txt}p8q032: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(91 missing values generated)
+{res}{txt}p8q041: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(91 missing values generated)
+{res}{txt}p8q042: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(91 missing values generated)
+{res}{txt}p8q051: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(91 missing values generated)
+{res}{txt}p8q052: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(91 missing values generated)
+{res}{txt}p8q0611: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9441 missing values generated)
+{res}{txt}p8q0612: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(8980 missing values generated)
+{res}{txt}p8q0613: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9424 missing values generated)
+{res}{txt}p8q0614: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9727 missing values generated)
+{res}{txt}p8q0615: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(1349 missing values generated)
+{res}{txt}p8q0621: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9591 missing values generated)
+{res}{txt}p8q0622: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9356 missing values generated)
+{res}{txt}p8q0623: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9646 missing values generated)
+{res}{txt}p8q0624: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9761 missing values generated)
+{res}{txt}p8q0625: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(712 missing values generated)
+{res}{txt}p9q011: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9738 missing values generated)
+{res}{txt}p9q012: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9700 missing values generated)
+{res}{txt}p9q013: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9441 missing values generated)
+{res}{txt}p9q014: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(9304 missing values generated)
+{res}{txt}p9q015: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(951 missing values generated)
+{res}{txt}p9q0211: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(93 missing values generated)
+{res}{txt}p9q0212: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(92 missing values generated)
+{res}{txt}p9q0213: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(93 missing values generated)
+{res}{txt}p9q0214: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(92 missing values generated)
+{res}{txt}p9q0215: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(92 missing values generated)
+{res}{txt}p9q0216: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(93 missing values generated)
+{res}{txt}p9q0217: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(92 missing values generated)
+{res}{txt}p9q0221: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(92 missing values generated)
+{res}{txt}p9q0222: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(93 missing values generated)
+{res}{txt}p9q0223: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(92 missing values generated)
+{res}{txt}p9q0224: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(92 missing values generated)
+{res}{txt}p9q0225: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(92 missing values generated)
+{res}{txt}p9q0226: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(92 missing values generated)
+{res}{txt}p9q0227: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(92 missing values generated)
+{res}{txt}
+{com}. 
+. compress
+  {txt}variable {bf}{res}p4q1112{sf}{txt} was {bf}{res}str106{sf}{txt} now {bf}{res}str3{sf}
+{txt}  (1,006,619 bytes saved)
+
+{com}. 
+. *Mouza Census Data to be used in the Analysis and further
+. save "$output/MouzaCensus_Cleaned.dta", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/output/MouzaCensus_Cleaned.dta{rm}
+saved
+{p_end}
+
+{com}. 
+. 
+. 
+{txt}end of do-file
+
+{com}.         
+. *Elasticity of services to tehsil population projections        
+.         do                      "$do/ServicesElasticity.do"
+{txt}
+{com}. 
+. 
+. *Regressions
+. 
+{txt}end of do-file
+
+{com}. 
+. *-------------------------------------------------------------------------------
+. *-------------------------------------------------------------------------------
+.         
+. 
+.         log close
+      {txt}name:  {res}<unnamed>
+       {txt}log:  {res}C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/log/logfile.smcl
+  {txt}log type:  {res}smcl
+ {txt}closed on:  {res}22 Nov 2022, 23:33:43
+{txt}{.-}
+{smcl}
+{txt}{sf}{ul off}
