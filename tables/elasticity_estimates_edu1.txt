@@ -1,0 +1,12 @@
+	(1)
+VARIABLES	edu_inst_tot
+	
+log_WSF19_Pop_densitysqkm	31.99**
+	(12.51)
+Constant	39.99
+	(72.17)
+	
+Observations	133
+R-squared	0.048
+Standard errors in parentheses	
+*** p<0.01, ** p<0.05, * p<0.1	

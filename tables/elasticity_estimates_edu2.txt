@@ -1,0 +1,12 @@
+	(1)
+VARIABLES	edu_inst_tot
+	
+log_WSF19POP17	58.76***
+	(12.63)
+Constant	-474.6***
+	(150.0)
+	
+Observations	133
+R-squared	0.142
+Standard errors in parentheses	
+*** p<0.01, ** p<0.05, * p<0.1	

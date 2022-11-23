@@ -1,0 +1,12 @@
+	(1)
+VARIABLES	police_stations
+	
+log_WSF19_Pop_densitysqkm	1.253***
+	(0.449)
+Constant	1.615
+	(2.590)
+	
+Observations	133
+R-squared	0.056
+Standard errors in parentheses	
+*** p<0.01, ** p<0.05, * p<0.1	

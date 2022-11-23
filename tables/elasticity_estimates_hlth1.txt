@@ -1,0 +1,12 @@
+	(1)
+VARIABLES	health_facilities
+	
+log_WSF19_Pop_densitysqkm	1.299**
+	(0.540)
+Constant	2.378
+	(3.112)
+	
+Observations	133
+R-squared	0.042
+Standard errors in parentheses	
+*** p<0.01, ** p<0.05, * p<0.1	
