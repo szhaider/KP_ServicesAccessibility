@@ -17,12 +17,12 @@ save "$output/population_number.dta", replace
 
 /*
 *Keeping only those Tehsils which are correctly specified in Mouza census 2020. And we have a mapping in Shapefile 2022
-*Dropping upper, lower, central etc
+*Dropping upper, lower, central etc.
 *WE have 133 TEHSILS for regressions
 
 import excel using "$xlsx/fuzzyjoin_adm3.xlsx", first clear
 drop Similarity
-drop ADM3_CODE
+*drop ADM3_CODE
 drop if ADM3_NAME == ""
 save "$output/tehsil_mouzatoshp2022.dta", replace         //Mapping file for Mouza and Shapefile tehsils
 */
@@ -37,55 +37,58 @@ merge 1:m tehsil using "$output/tehsil_mouzatoshp2022.dta"    //same 133 tehsils
 keep if _m == 3
 drop _m
 
-order ADM3_NAME
+order ADM3_NAME ADM3_CODE
 
 *Combining with Tehsil level Popualtion numbers
-merge m:1 ADM3_NAME using  "$output/population_number.dta"      //same 133 tehsils matched
+merge m:1 ADM3_NAME using  "$output/population_number.dta"   , force   //same 133 tehsils matched
 keep if _m == 3
 drop _m
 
+order ADM2_NAME-DISP_AREA, before(ADM3_NAME)
+destring WPOP20, replace force
 
-drop if ADM3_NAME == "Bar Chamarkand"     //outlier since number of schools < log pop and other services 0 (This is NMD tehsil!!!!!!!)
+*drop if ADM3_NAME == "Bar Chamarkand"     //outlier since number of schools < log pop and other services 0 (This is NMD tehsil!!!!!!!)
 
 gen NMDs = 1 if ADM2_NAME == "Bajaur" | ADM2_NAME == "Khyber" | ADM2_NAME == "Kurram" | ADM2_NAME == "Mohmand" | ADM2_NAME == "North Waziristan" | ADM2_NAME == "Orakzai" | ADM2_NAME == "South Waziristan" 
 replace NMDs = 0 if NMDs == .
-tab NMDs,m             //39 NMDs
+tab NMDs,m             //39 NMD tehsils
 
 *-------------------------------------------------------------------------------
 
 *Elasticities estimation
-clonevar primary_schools = edu_inst_tot
+clonevar primary_schools = pri_schl_tot
 clonevar hospitals = health_facilities
 clonevar police_stat = police_stations
 
 est clear
 
-gen log_edu_inst_tot = log(edu_inst_tot)
+gen log_primary_schools = log(primary_schools)
 gen log_WSF19POP17 = log(WSF19POP17)
 gen log_WSF19_Pop_densitysqkm = log(WSF19_Pop_densitysqkm)
 
 gen pop_gr2025  = ((WSF19_TehsilPop_2025 - WSF19POP17)/WSF19POP17)
 
-
-reg edu_inst_tot WSF19_Pop_densitysqkm
+areg primary_schools log_WSF19POP17 c.log_WSF19POP17#c.NMDs , absorb(NMDs)    //Tobediscussed
 
 *Education Facilities   (play with only primary etc)
-eststo PrimarySchools_PopDensity: reg edu_inst_tot log_WSF19_Pop_densitysqkm    //preferred    [settlement weighted] [aw=p1q10]
-outreg2 . using "$tables/elasticity_estimates_edu1.xls", replace
+*eststo PrimarySchools_PopDensity: reg edu_inst_tot log_WSF19_Pop_densitysqkm    //preferred    [settlement weighted] [aw=p1q10]
+*outreg2 . using "$tables/elasticity_estimates_edu1.xls", replace
 
-eststo PrimarySchools_Population: reg edu_inst_tot log_WSF19POP17  
-outreg2 . using "$tables/elasticity_estimates_edu2.xls", replace
-/*
-lvr2plot
-rvfplot
-gen log_WSF19_TehsilPop_2025 = log(WSF19_TehsilPop_2025)
-avplot log_WSF19_TehsilPop_2025
-*/
+eststo PrimarySchools: reg primary_schools log_WSF19POP17 c.log_WSF19POP17#i.NMDs
+*eststo PrimarySchools: areg primary_schools log_WSF19POP17 c.log_WSF19POP17#i.NMDs, absorb(NMDs)
+outreg2 . using "$tables/elasticity_estimates_primary_all.xls", replace
+
+*lvr2plot
+*rvfplot
+*gen log_WSF19_TehsilPop_2025 = log(WSF19_TehsilPop_2025)
+*avplot WSF19_TehsilPop_2025
+
 *---
 *Predict
 predict primary_schools_pred, xb 
-predict primary_errors, residuals
+predict primary_delta, residuals
 
+*gen delta_primary = primary_schools_pred - primary_schools   //errors
 
 *gen log_WSF19_TehsilPop_2025 = log(WSF19_TehsilPop_2025)
 gen primary_schools_new =  primary_schools_pred * (1+pop_gr2025)
@@ -99,37 +102,41 @@ gen primary_schools_needed2025 = round(primary_schools_new - primary_schools_pre
 *replace  primary_schools = primary_schools + _b[log_WSF19POP17] * (1+pop_gr2025)
 *predict primary_schools_p, xb 
 
-
 *Health Facilities
-eststo Hospitals_PopDensity: reg health_facilities log_WSF19_Pop_densitysqkm  
-outreg2 . using "$tables/elasticity_estimates_hlth1.xls", replace
+*eststo Hospitals_PopDensity: reg health_facilities log_WSF19_Pop_densitysqkm  
+*outreg2 . using "$tables/elasticity_estimates_hlth1.xls", replace
 
-eststo Hospitals_Population: reg health_facilities log_WSF19POP17  
-outreg2 . using "$tables/elasticity_estimates_hlth2.xls", replace
+eststo Hospitals: reg health_facilities log_WSF19POP17  c.log_WSF19POP17#i.NMDs
+*eststo Hospitals: areg health_facilities log_WSF19POP17  c.log_WSF19POP17#i.NMDs, absorb(NMDs)
+outreg2 . using "$tables/elasticity_estimates_hospitals.xls", replace
 
 *replace hospitals  = hospitals + _b[log_WSF19POP17] * pop_gr2025
 predict hospitals_pred, xb 
+predict hospitals_delta, residuals
+
 gen hospitals_new =  hospitals_pred * (1+pop_gr2025)
 gen hospitals_needed2025 = round(hospitals_new - hospitals_pred) 
 
-
 *POlice Stations
-eststo PoliceSt_PopDensity: reg police_stations log_WSF19_Pop_densitysqkm 
-outreg2 . using "$tables/elasticity_estimates_adm1.xls", replace
+*eststo PoliceSt_PopDensity: reg police_stations log_WSF19_Pop_densitysqkm 
+*outreg2 . using "$tables/elasticity_estimates_adm1.xls", replace
 
-eststo PoliceSt_Population: reg police_stations log_WSF19POP17 
-outreg2 . using "$tables/elasticity_estimates_adm2.xls", replace
+eststo PoliceStations: reg police_stations log_WSF19POP17 c.log_WSF19POP17#i.NMDs
+*eststo PoliceStations: areg police_stations log_WSF19POP17 c.log_WSF19POP17#i.NMDs, absorb(NMDs)
+outreg2 . using "$tables/elasticity_estimates_policest.xls", replace
 
 *replace  police_stat =  police_stat + _b[log_WSF19POP17] * pop_gr2025
 predict policestat_pred, xb 
-gen policestat_new =  policestat_pred * (1+pop_gr2025)
+predict policestat_delta, residuals 
+
+gen policestat_new =  policestat_pred * (1+pop_gr2025)  
 gen police_stat_needed2025 = round(policestat_new - policestat_pred) 
 
 est dir
 
-coefplot PrimarySchools_Population Hospitals_Population PoliceSt_Population PrimarySchools_PopDensity  Hospitals_PopDensity  PoliceSt_PopDensity , yline(0) vertical title("Elasticity Estimates (Log Linear)")  ytitle("Change in services (sums) due to chnage in Population (%)") drop(_cons) ///
-		  recast(bar) ciopts(recast(rcap)) citop barwidt(0.1) ///
-		  note("Source: Authors' Calculations")
+coefplot PrimarySchools Hospitals PoliceStations , yline(0) vertical title("Elasticity Estimates (Log Linear)")  ytitle("Change in basic services due to Population Growth (%)") drop(_cons) ///
+		  recast(bar) ciopts(recast(rcap)) citop barwidt(0.1) ///  subtitle("Controlling for NMDs Fixed Effect") 
+		  note("Source: Authors' calculations")
 graph export "$figures/coefplot.png", replace
 		 
 		 

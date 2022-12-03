@@ -52,7 +52,7 @@ Last modified:			November, 2022
 *-----------------
 	dir "${root}"
 	dir "${do}"
-	dir "${rawdata}"
+	dir "${data}"
 	dir "${xlsx}"
 	dir "${output}"
 	dir "${results}"	
