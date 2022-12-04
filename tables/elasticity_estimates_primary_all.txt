@@ -1,16 +1,18 @@
 	(1)
 VARIABLES	primary_schools
 	
-log_WSF19POP17	14.79***
-	(5.290)
+log_WSF19POP17	25.61**
+	(11.30)
 0b.NMDs#co.log_WSF19POP17	0
 	(0)
-1.NMDs#c.log_WSF19POP17	-4.768***
-	(1.311)
-Constant	-68.51
-	(64.36)
+1.NMDs#c.log_WSF19POP17	-2.943
+	(12.57)
+log_WSF19_Pop_densitysqkm	-13.25
+	(8.479)
+Constant	-128.1
+	(78.13)
 	
 Observations	133
-R-squared	0.193
+R-squared	0.213
 Standard errors in parentheses	
 *** p<0.01, ** p<0.05, * p<0.1	

@@ -67,21 +67,23 @@ gen log_WSF19POP17 = log(WSF19POP17)
 gen log_WSF19_Pop_densitysqkm = log(WSF19_Pop_densitysqkm)
 
 gen pop_gr2025  = ((WSF19_TehsilPop_2025 - WSF19POP17)/WSF19POP17)
+gen log_Adm3_Area_sqkm = log(Adm3_Area_sqkm)
 
-areg primary_schools log_WSF19POP17 c.log_WSF19POP17#c.NMDs , absorb(NMDs)    //Tobediscussed
+areg primary_schools log_WSF19POP17 c.log_WSF19POP17#c.NMDs  log_WSF19_Pop_densitysqkm, absorb(NMDs)    //Tobediscussed
 
 *Education Facilities   (play with only primary etc)
 *eststo PrimarySchools_PopDensity: reg edu_inst_tot log_WSF19_Pop_densitysqkm    //preferred    [settlement weighted] [aw=p1q10]
 *outreg2 . using "$tables/elasticity_estimates_edu1.xls", replace
 
-eststo PrimarySchools: reg primary_schools log_WSF19POP17 c.log_WSF19POP17#i.NMDs
-*eststo PrimarySchools: areg primary_schools log_WSF19POP17 c.log_WSF19POP17#i.NMDs, absorb(NMDs)
+eststo PrimarySchools: reg primary_schools log_WSF19POP17 c.log_WSF19POP17#i.NMDs log_WSF19_Pop_densitysqkm i.NMDs  
+eststo PrimarySchools: areg primary_schools log_WSF19POP17 c.log_WSF19POP17#i.NMDs log_WSF19_Pop_densitysqkm , absorb(NMDs)
 outreg2 . using "$tables/elasticity_estimates_primary_all.xls", replace
 
 *lvr2plot
 *rvfplot
+*rvpplot log_WSF19POP17
 *gen log_WSF19_TehsilPop_2025 = log(WSF19_TehsilPop_2025)
-*avplot WSF19_TehsilPop_2025
+*avplots 
 
 *---
 *Predict
@@ -106,8 +108,8 @@ gen primary_schools_needed2025 = round(primary_schools_new - primary_schools_pre
 *eststo Hospitals_PopDensity: reg health_facilities log_WSF19_Pop_densitysqkm  
 *outreg2 . using "$tables/elasticity_estimates_hlth1.xls", replace
 
-eststo Hospitals: reg health_facilities log_WSF19POP17  c.log_WSF19POP17#i.NMDs
-*eststo Hospitals: areg health_facilities log_WSF19POP17  c.log_WSF19POP17#i.NMDs, absorb(NMDs)
+*eststo Hospitals: reg health_facilities log_WSF19POP17  c.log_WSF19POP17#i.NMDs log_WSF19_Pop_densitysqkm i.NMDs 
+eststo Hospitals: areg health_facilities log_WSF19POP17  c.log_WSF19POP17#i.NMDs log_WSF19_Pop_densitysqkm , absorb(NMDs)
 outreg2 . using "$tables/elasticity_estimates_hospitals.xls", replace
 
 *replace hospitals  = hospitals + _b[log_WSF19POP17] * pop_gr2025
@@ -121,8 +123,8 @@ gen hospitals_needed2025 = round(hospitals_new - hospitals_pred)
 *eststo PoliceSt_PopDensity: reg police_stations log_WSF19_Pop_densitysqkm 
 *outreg2 . using "$tables/elasticity_estimates_adm1.xls", replace
 
-eststo PoliceStations: reg police_stations log_WSF19POP17 c.log_WSF19POP17#i.NMDs
-*eststo PoliceStations: areg police_stations log_WSF19POP17 c.log_WSF19POP17#i.NMDs, absorb(NMDs)
+*eststo PoliceStations: reg police_stations log_WSF19POP17 c.log_WSF19POP17#i.NMDs log_WSF19_Pop_densitysqkm i.NMDs  
+eststo PoliceStations: areg police_stations log_WSF19POP17 c.log_WSF19POP17#i.NMDs log_WSF19_Pop_densitysqkm , absorb(NMDs)
 outreg2 . using "$tables/elasticity_estimates_policest.xls", replace
 
 *replace  police_stat =  police_stat + _b[log_WSF19POP17] * pop_gr2025
@@ -134,12 +136,11 @@ gen police_stat_needed2025 = round(policestat_new - policestat_pred)
 
 est dir
 
-coefplot PrimarySchools Hospitals PoliceStations , yline(0) vertical title("Elasticity Estimates (Log Linear)")  ytitle("Change in basic services due to Population Growth (%)") drop(_cons) ///
+coefplot PrimarySchools Hospitals PoliceStations , yline(0) vertical title("Elasticity Estimates (Log Linear)") subtitle("Controlling for NMDs Fixed Effect") ytitle("Change in basic services due to Population Growth (%)") drop(_cons) ///
 		  recast(bar) ciopts(recast(rcap)) citop barwidt(0.1) ///  subtitle("Controlling for NMDs Fixed Effect") 
 		  note("Source: Authors' calculations")
-graph export "$figures/coefplot.png", replace
-		 
-		 
+graph export "$figures/coefplot_FEs&PopDensity.png", replace
+		 		 
 *order edu_inst_tot primary_schools health_facilities hospitals police_stations police_stat, last 		
 
 *gen Primary_schools_needed2025 = round(primary_schools - edu_inst_tot)
