@@ -3,7 +3,7 @@
       name:  {res}<unnamed>
        {txt}log:  {res}C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/log/logfile.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}22 Nov 2022, 23:33:19
+ {txt}opened on:  {res} 7 Dec 2022, 15:43:11
 {txt}
 {com}. *-------------------------------------------------------------------------------
 . *-------------------------------------------------------------------------------
@@ -18,10 +18,14 @@
 . 
 . *Cleaning and preparing Mouza Census 2020
 . 
+. 
+. 
 . import excel "$data/MICRO DATA OF MOUZA CENSUS - 2020.xlsx", sheet("Sheet1") firstrow case(lower) clear
 {res}{text}(226 vars, 9,775 obs)
 
 {com}. 
+. *-------------------------------------------------------------------------------
+. 
 . *Labeling the data 
 . foreach var of varlist sr-p9q0227 {c -(}
 {txt}  2{com}.     
@@ -748,12 +752,24 @@ Sources of Employment of Populace 2. Female 7. Labour 1. Mostly 2. Some 3. None
 {res}{txt}p9q0227: all characters numeric; {res}replaced {txt}as {res}byte
 {txt}(92 missing values generated)
 {res}{txt}
-{com}. 
+{com}. *-------------------------------------------------------------------------------
+. 
 . compress
   {txt}variable {bf}{res}p4q1112{sf}{txt} was {bf}{res}str106{sf}{txt} now {bf}{res}str3{sf}
 {txt}  (1,006,619 bytes saved)
 
 {com}. 
+. replace tehsil = substr(tehsil,1,1)+lower(substr(tehsil,2,.))
+{txt}(9,773 real changes made)
+
+{com}. /*
+> *merging mouza-shapefile mapping   (Use this file to map mouza census tehsils to map Pak shapefile 2022 tehsils)
+> merge m:1 tehsil using "$output/tehsil_mouzatoshp2022.dta"    //9645 matched   128 donot  match
+> keep if _m == 3
+> drop _m
+> order ADM3_NAME ADM3_CODE
+> */
+. 
 . *Mouza Census Data to be used in the Analysis and further
 . save "$output/MouzaCensus_Cleaned.dta", replace
 {txt}{p 0 4 2}
@@ -763,6 +779,532 @@ saved
 {p_end}
 
 {com}. 
+. *-------------------------------------------------------------------------------
+. 
+. 
+. 
+. 
+. 
+. 
+. 
+{txt}end of do-file
+
+{com}.         
+. *Data Preparation for analytics
+.         do                      "$do/data_prep.do"      
+{txt}
+{com}. 
+. 
+. *Data prep for regressions
+. cap graph drop _all
+{txt}
+{com}. 
+. use "$output/MouzaCensus_Cleaned.dta", clear
+{txt}
+{com}. 
+. codebook tehsil     //We have 140 tehsils in mouza census
+
+{txt}{hline}
+{res}tehsil{right:Name of Tehsil}
+{txt}{hline}
+
+{col 19}Type: String ({res}str35{txt})
+
+{col 10}Unique values: {res}140{col 51}{txt}Missing "": {res}0{txt}/{res}9,773
+
+{txt}{col 15}Examples: {res}"Chitral "
+{col 25}"Kandia"
+{col 25}"Nowshera "
+{col 25}"Serwekai "
+
+{txt}{col 16}Warning: Variable has embedded and trailing blanks.
+
+{com}. 
+. tab p1q09,m       //94% are rural mouzas
+
+  {txt}Status of {c |}
+      Mouza {c |}
+    1-Rural {c |}
+    2-Urban {c |}
+   3-Partly {c |}
+      Urban {c |}
+   4-Forest {c |}
+5-UnPopula {c |}
+        ted {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}      9,200       94.14       94.14
+{txt}          2 {c |}{res}        213        2.18       96.32
+{txt}          3 {c |}{res}        221        2.26       98.58
+{txt}          4 {c |}{res}         20        0.20       98.78
+{txt}          5 {c |}{res}        119        1.22      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,773      100.00
+{txt}
+{com}. 
+. destring p4q1112 , replace force
+{txt}p4q1112: contains nonnumeric characters; {res}replaced {txt}as {res}int
+{txt}(95 missing values generated)
+{res}{txt}
+{com}. codebook village     //8,982 unique mouzas
+
+{txt}{hline}
+{res}village{right:Name of Village}
+{txt}{hline}
+
+{col 19}Type: String ({res}str32{txt})
+
+{col 10}Unique values: {res}8,982{col 51}{txt}Missing "": {res}0{txt}/{res}9,773
+
+{txt}{col 15}Examples: {res}"CURVI"
+{col 25}"JATAI GHABAJ"
+{col 25}"MANDIRI KILLI (CHHATTAR)"
+{col 25}"SANDALO"
+
+{txt}{col 16}Warning: Variable has embedded blanks.
+
+{com}. 
+. *collapse p1q09-p9q0227,  by(village tehsil district)     //Okay ..Different tehsils/districts have mouzas with same names. Common incidence
+. *Repeating villages within same tehsils fixed    >> 9680 mouzas available
+. *tab village,m
+. 
+. *Education (Boys + Girls) (Primary + Middle + HigherSecondary + College + VocationalInstitute + ReligiousInstitutes)
+. *Boys: p4q1111 p4q1121 p4q1131 p4q1141 p4q1151 p4q1161
+. *Girls: p4q1211 p4q1221 p4q1231 p4q1241 p4q1251 p4q1261
+. 
+. *glo educ_all "p4q1111 p4q1121 p4q1131 p4q1141 p4q1151 p4q1161 p4q1211 p4q1221 p4q1231 p4q1241 p4q1251 p4q1261"
+. 
+. glo educ_boys   "p4q1111 p4q1121 p4q1131 p4q1141 p4q1161"                // p4q1151 
+{txt}
+{com}. glo educ_girls  "p4q1211 p4q1221 p4q1231 p4q1241 p4q1261"                        // p4q1251 
+{txt}
+{com}. 
+. *Boys
+. foreach var of varlist $educ_boys {c -(}
+{txt}  2{com}.         recode `var' (1=1 "Yes") (2=0 "No"), gen(`var'_education_boys)
+{txt}  3{com}.                 tab `var'_education, m
+{txt}  4{com}. {c )-}
+{txt}(2765 differences between {bf:p4q1111} and {bf:p4q1111_education_boys})
+
+  RECODE of {c |}
+    p4q1111 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      2,765       28.29       28.29
+{txt}        Yes {c |}{res}      6,914       70.75       99.04
+{txt}          . {c |}{res}         94        0.96      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,773      100.00
+{txt}(6311 differences between {bf:p4q1121} and {bf:p4q1121_education_boys})
+
+  RECODE of {c |}
+    p4q1121 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      6,311       64.58       64.58
+{txt}        Yes {c |}{res}      3,366       34.44       99.02
+{txt}          . {c |}{res}         96        0.98      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,773      100.00
+{txt}(7623 differences between {bf:p4q1131} and {bf:p4q1131_education_boys})
+
+  RECODE of {c |}
+    p4q1131 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      7,623       78.00       78.00
+{txt}        Yes {c |}{res}      2,056       21.04       99.04
+{txt}          . {c |}{res}         94        0.96      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,773      100.00
+{txt}(9361 differences between {bf:p4q1141} and {bf:p4q1141_education_boys})
+
+  RECODE of {c |}
+    p4q1141 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      9,361       95.78       95.78
+{txt}        Yes {c |}{res}        318        3.25       99.04
+{txt}          . {c |}{res}         94        0.96      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,773      100.00
+{txt}(5461 differences between {bf:p4q1161} and {bf:p4q1161_education_boys})
+
+  RECODE of {c |}
+    p4q1161 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      5,461       55.88       55.88
+{txt}        Yes {c |}{res}      4,219       43.17       99.05
+{txt}          . {c |}{res}         93        0.95      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,773      100.00
+{txt}
+{com}. 
+. egen education_male = rowmean(p4q1111_education_boys-p4q1131_education_boys)
+{txt}(94 missing values generated)
+
+{com}. label var education_male "Education Accessibility - Boys"
+{txt}
+{com}. 
+. sum education_male, det
+
+               {txt}Education Accessibility - Boys
+{hline 61}
+      Percentiles      Smallest
+ 1%    {res}        0              0
+{txt} 5%    {res}        0              0
+{txt}10%    {res}        0              0       {txt}Obs         {res}      9,679
+{txt}25%    {res}        0              0       {txt}Sum of wgt. {res}      9,679
+
+{txt}50%    {res} .3333333                      {txt}Mean          {res} .4248373
+                        {txt}Largest       Std. dev.     {res} .3549772
+{txt}75%    {res} .6666667              1
+{txt}90%    {res}        1              1       {txt}Variance      {res} .1260088
+{txt}95%    {res}        1              1       {txt}Skewness      {res} .3747502
+{txt}99%    {res}        1              1       {txt}Kurtosis      {res} 1.912439
+{txt}
+{com}. hist education_male, percent bin(3) ytitle("Percent") title("Boys: Education Accessibility Index") subtitle("Mouza level Averages") name(gr_11)
+{txt}(bin={res}3{txt}, start={res}0{txt}, width={res}.33333333{txt})
+{res}{txt}
+{com}. graph export "$figures/edu_access_boys.png", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/edu_access_boys.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. *22% of the mouzas have only 1 facility available out of 6
+. 
+. *Girls
+. foreach var of varlist $educ_girls {c -(}
+{txt}  2{com}.         recode `var' (1=1 "Yes") (2=0 "No"), gen(`var'_education_girls)
+{txt}  3{com}.                 tab `var'_education, m
+{txt}  4{com}. {c )-}
+{txt}(4343 differences between {bf:p4q1211} and {bf:p4q1211_education_girls})
+
+  RECODE of {c |}
+    p4q1211 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      4,343       44.44       44.44
+{txt}        Yes {c |}{res}      5,336       54.60       99.04
+{txt}          . {c |}{res}         94        0.96      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,773      100.00
+{txt}(7194 differences between {bf:p4q1221} and {bf:p4q1221_education_girls})
+
+  RECODE of {c |}
+    p4q1221 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      7,194       73.61       73.61
+{txt}        Yes {c |}{res}      2,484       25.42       99.03
+{txt}          . {c |}{res}         95        0.97      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,773      100.00
+{txt}(8401 differences between {bf:p4q1231} and {bf:p4q1231_education_girls})
+
+  RECODE of {c |}
+    p4q1231 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      8,401       85.96       85.96
+{txt}        Yes {c |}{res}      1,278       13.08       99.04
+{txt}          . {c |}{res}         94        0.96      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,773      100.00
+{txt}(9397 differences between {bf:p4q1241} and {bf:p4q1241_education_girls})
+
+  RECODE of {c |}
+    p4q1241 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      9,397       96.15       96.15
+{txt}        Yes {c |}{res}        282        2.89       99.04
+{txt}          . {c |}{res}         94        0.96      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,773      100.00
+{txt}(6475 differences between {bf:p4q1261} and {bf:p4q1261_education_girls})
+
+  RECODE of {c |}
+    p4q1261 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      6,475       66.25       66.25
+{txt}        Yes {c |}{res}      3,205       32.79       99.05
+{txt}          . {c |}{res}         93        0.95      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,773      100.00
+{txt}
+{com}. 
+. egen education_female = rowmean(p4q1211_education_girls-p4q1231_education_girls)
+{txt}(94 missing values generated)
+
+{com}. label var education_female "Education Accessibility - Girls"
+{txt}
+{com}. 
+. sum education_female, det
+
+               {txt}Education Accessibility - Girls
+{hline 61}
+      Percentiles      Smallest
+ 1%    {res}        0              0
+{txt} 5%    {res}        0              0
+{txt}10%    {res}        0              0       {txt}Obs         {res}      9,679
+{txt}25%    {res}        0              0       {txt}Sum of wgt. {res}      9,679
+
+{txt}50%    {res} .3333333                      {txt}Mean          {res} .3133244
+                        {txt}Largest       Std. dev.     {res} .3420726
+{txt}75%    {res} .6666667              1
+{txt}90%    {res}        1              1       {txt}Variance      {res} .1170137
+{txt}95%    {res}        1              1       {txt}Skewness      {res} .7689694
+{txt}99%    {res}        1              1       {txt}Kurtosis      {res} 2.376865
+{txt}
+{com}. hist education_female, percent bin(3) ytitle("Percent") title("Girls: Education Accessibility Index") subtitle("Mouza level Averages") name(gr_12)
+{txt}(bin={res}3{txt}, start={res}0{txt}, width={res}.33333333{txt})
+{res}{txt}
+{com}. graph export "$figures/edu_access_girls.png", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/edu_access_girls.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. * Disparity bw girls and boys
+. graph combine gr_11 gr_12, note("Educational Institutions: Primary, Secondary & Higher Secondary") name(comb_edu_index)
+{res}{txt}
+{com}. graph export "$figures/educ_gender.png", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/educ_gender.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. *Gender disparity can be seen at mouza level in terms of education accessibility among boys and girls
+. 
+. *-------------------------------------------------------------------------------
+. *Health (Hospitals/Dispensary)   try other options too.
+. glo health_fac "p3q0871"
+{txt}
+{com}. 
+. recode $health_fac (1=1 "Yes") (2=0 "No"), gen(health_facilities)
+{txt}(8331 differences between {bf:p3q0871} and {bf:health_facilities})
+
+{com}. label var health_facilities "Hospitals/Dispensary facility available"
+{txt}
+{com}. 
+. tab health_facilities,m
+
+{txt}Hospitals/D {c |}
+  ispensary {c |}
+   facility {c |}
+  available {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      8,331       85.25       85.25
+{txt}        Yes {c |}{res}      1,349       13.80       99.05
+{txt}          . {c |}{res}         93        0.95      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,773      100.00
+{txt}
+{com}. 
+. 
+. *-------------------------------------------------------------------------------
+. *Admin
+. *Police Stations + BAzzar +  wholesale markets
+. 
+. glo admin_fac "p8q051 p6q061 p6q1311"
+{txt}
+{com}. 
+. foreach var of varlist $admin_fac{c -(}
+{txt}  2{com}. recode `var' (1=1 "Yes") (2=0 "No"), gen(`var'_admin_fac)
+{txt}  3{com}. 
+. tab `var'_admin_fac,m
+{txt}  4{com}. {c )-}
+{txt}(8472 differences between {bf:p8q051} and {bf:p8q051_admin_fac})
+
+  RECODE of {c |}
+     p8q051 {c |}
+    (Police {c |}
+Station/Pol {c |}
+ice Post in {c |}
+     Mouza) {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      8,472       86.69       86.69
+{txt}        Yes {c |}{res}      1,210       12.38       99.07
+{txt}          . {c |}{res}         91        0.93      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,773      100.00
+{txt}(8106 differences between {bf:p6q061} and {bf:p6q061_admin_fac})
+
+  RECODE of {c |}
+     p6q061 {c |}
+(Market/Baz {c |}
+ar in Mouza {c |}
+    1. Yes) {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      8,106       82.94       82.94
+{txt}        Yes {c |}{res}      1,578       16.15       99.09
+{txt}          . {c |}{res}         89        0.91      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,773      100.00
+{txt}(9376 differences between {bf:p6q1311} and {bf:p6q1311_admin_fac})
+
+  RECODE of {c |}
+    p6q1311 {c |}
+ (Wholesale {c |}
+     Market {c |}
+1-Livestock {c |}
+   1. Yes ) {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      9,376       95.94       95.94
+{txt}        Yes {c |}{res}        306        3.13       99.07
+{txt}          . {c |}{res}         91        0.93      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,773      100.00
+{txt}
+{com}. *-------------------------------------------------------------------------------
+. 
+. 
+. *-------------------------------------------------------------------------------
+. *For Regression
+. 
+. collapse (sum) *_education_boys *_education_girls health_facilities *_admin_fac, by(tehsil)     //Settlement weighted   [aw=p1q10] 
+{res}{txt}
+{com}. 
+. *For regressions, taking tehsil level sums of boys and girls education institutions
+. *collapse (sum) *_education_boys *_education_girls , by(tehsil)
+. *Total educational institutions for boys and girls per tehsil - SInce we have total population without gender disaggregation
+. 
+. * edu_inst_tot = rowtotal(p4q1111_education_boys-p4q1261_education_girls)    //*coeff estimate is high due to high total
+. 
+. *Aggregating  Education institutions for boys and girls 
+. egen pri_schl_tot = rowtotal(p4q1111_education_boys p4q1211_education_girls)
+{txt}
+{com}. egen mid_schl_tot = rowtotal(p4q1121_education_boys p4q1221_education_girls)
+{txt}
+{com}. egen sec_schl_tot = rowtotal(p4q1131_education_boys p4q1231_education_girls)
+{txt}
+{com}. egen col_tot     =  rowtotal(p4q1141_education_boys  p4q1241_education_girls)   
+{txt}
+{com}. egen rel_schl_tot = rowtotal(p4q1161_education_boys p4q1261_education_girls)
+{txt}
+{com}. 
+. 
+. label var pri_schl_tot "Total of all Primary Schools for boys and girls - Tehsil level"
+{txt}
+{com}. label var mid_schl_tot "Total of all Middle Schools for boys and girls - Tehsil level"
+{txt}
+{com}. label var sec_schl_tot "Total of all Higher Secondary Schools for boys and girls - Tehsil level"
+{txt}
+{com}. label var col_tot "Total of all Colleges for boys and girls - Tehsil level"
+{txt}
+{com}. label var rel_schl_tot "Total of all Madrassahs for boys and girls - Tehsil level"
+{txt}
+{com}. 
+. 
+. *For regressions, taking tehsil level sums of Hospitals/Dispensary in tehsils
+. *collapse (sum) health_facilities, by(tehsil)
+. label var health_facilities "Total hospitals/dispensaries - Tehsil level"
+{txt}
+{com}. 
+. *For regressions, taking tehsil level sums of Police Stations in tehsils
+. *collapse (sum) police_stations, by(tehsil)
+. label var p8q051_admin_fac "Total police_stations - Tehsil level"
+{txt}
+{com}. label var p6q1311_admin_fac "Total Whole sale markets - Tehsil level"
+{txt}
+{com}. label var p6q061_admin_fac "Markets/Bazzars in mouzas - Tehsil level"
+{txt}
+{com}. 
+. *sum police_stations    //A few tehsils with 0 police stations
+. 
+. *-------------------------------------------------------------------------------
+. *to create a matching for 2022 shapefiles tehsil names
+. 
+. replace tehsil = substr(tehsil,1,1)+lower(substr(tehsil,2,.))
+{txt}(0 real changes made)
+
+{com}. 
+. *export excel "$xlsx/tehsilsdata.xls", first(variable) replace
+. save "$output/tehsillevel_services_sums.dta", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/output/tehsillevel_services_sums.dta{rm}
+saved
+{p_end}
+
+{com}. *-------------------------------------------------------------------------------
+. 
+. 
 . 
 . 
 {txt}end of do-file
@@ -775,9 +1317,1565 @@ saved
 . 
 . *Regressions
 . 
-{txt}end of do-file
+. *-------------------------------------------------------------------------------
+. 
+. /*
+> *Population Data for regressions  (To upadte this data, first update the excel input)
+> 
+> import excel using "$xlsx/population/KP_WSF_adm3_Pop.xlsx", first clear
+> drop if _n == _N   //Dropping totals
+> save "$output/population_number.dta", replace
+> 
+> */
+. 
+. *-------------------------------------------------------------------------------
+. 
+. /*
+> *Keeping only those Tehsils which are correctly specified in Mouza census 2020. And we have a mapping in Shapefile 2022
+> *Dropping upper, lower, central etc.
+> *WE have 133 TEHSILS for regressions
+> 
+> import excel using "$xlsx/fuzzyjoin_adm3.xlsx", first clear
+> drop Similarity
+> *drop ADM3_CODE
+> drop if ADM3_NAME == ""
+> save "$output/tehsil_mouzatoshp2022.dta", replace         //Mapping file for Mouza and Shapefile tehsils
+> */
+. 
+. *-------------------------------------------------------------------------------
+. 
+. *Reading Tehsil level sums for services (Education + Health + admin)
+. use "$output/tehsillevel_services_sums.dta", clear
+{txt}
+{com}. 
+. 
+. *merging mouza-shapefile mapping   (Use this file to map mouza census tehsils to map Pak shapefile 2022 tehsils)
+. merge 1:m tehsil using "$output/tehsil_mouzatoshp2022.dta"    //same 133 tehsils matched
+{res}
+{txt}{col 5}Result{col 33}Number of obs
+{col 5}{hline 41}
+{col 5}Not matched{col 30}{res}               7
+{txt}{col 9}from master{col 30}{res}               7{txt}  (_merge==1)
+{col 9}from using{col 30}{res}               0{txt}  (_merge==2)
+
+{col 5}Matched{col 30}{res}             133{txt}  (_merge==3)
+{col 5}{hline 41}
+
+{com}. keep if _m == 3
+{txt}(7 observations deleted)
+
+{com}. drop _m
+{txt}
+{com}. 
+. order ADM3_NAME ADM3_CODE
+{txt}
+{com}. 
+. 
+. *Combining with Tehsil level Popualtion numbers
+. merge m:1 ADM3_NAME using  "$output/population_number.dta"   , force   //same 133 tehsils matched
+{res}
+{txt}{col 5}Result{col 33}Number of obs
+{col 5}{hline 41}
+{col 5}Not matched{col 30}{res}              25
+{txt}{col 9}from master{col 30}{res}               0{txt}  (_merge==1)
+{col 9}from using{col 30}{res}              25{txt}  (_merge==2)
+
+{col 5}Matched{col 30}{res}             133{txt}  (_merge==3)
+{col 5}{hline 41}
+
+{com}. keep if _m == 3
+{txt}(25 observations deleted)
+
+{com}. drop _m
+{txt}
+{com}. 
+. order ADM2_NAME-DISP_AREA, before(ADM3_NAME)
+{txt}
+{com}. destring WPOP20, replace force
+{txt}WPOP20: all characters numeric; {res}replaced {txt}as {res}long
+{txt}
+{com}. 
+. *drop if ADM3_NAME == "Bar Chamarkand"     //outlier since number of schools < log pop and other services 0 (This is NMD tehsil!!!!!!!)
+. 
+. gen NMDs = 1 if ADM2_NAME == "Bajaur" | ADM2_NAME == "Khyber" | ADM2_NAME == "Kurram" | ADM2_NAME == "Mohmand" | ADM2_NAME == "North Waziristan" | ADM2_NAME == "Orakzai" | ADM2_NAME == "South Waziristan" 
+{txt}(93 missing values generated)
+
+{com}. replace NMDs = 0 if NMDs == .
+{txt}(93 real changes made)
+
+{com}. tab NMDs,m             //39 NMD tehsils
+
+       {txt}NMDs {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          0 {c |}{res}         93       69.92       69.92
+{txt}          1 {c |}{res}         40       30.08      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}        133      100.00
+{txt}
+{com}. 
+. *-------------------------------------------------------------------------------
+. 
+. *Elasticities estimation
+. clonevar PrimarySchools = pri_schl_tot
+{txt}
+{com}. clonevar MiddleSchools = mid_schl_tot
+{txt}
+{com}. clonevar SecondarySchools = sec_schl_tot
+{txt}
+{com}. clonevar Colleges = col_tot
+{txt}
+{com}. clonevar Madrassahs = rel_schl_tot
+{txt}
+{com}. clonevar Hospitals = health_facilities
+{txt}
+{com}. clonevar PoliceStations = p8q051_admin_fac
+{txt}
+{com}. clonevar WholesaleMarkets = p6q1311_admin_fac
+{txt}
+{com}. clonevar Markets = p6q061_admin_fac
+{txt}
+{com}. 
+. gen log_primary_schools = log(PrimarySchools)
+{txt}
+{com}. gen log_WSF19POP17 = log(WSF19POP17)
+{txt}
+{com}. gen log_WSF19_Pop_densitysqkm = log(WSF19_Pop_densitysqkm)
+{txt}
+{com}. 
+. gen pop_gr2025  = ((WSF19_TehsilPop_2025 - WSF19POP17)/WSF19POP17)
+{txt}
+{com}. gen pop_gr2030  = ((WSF19_TehsilPop_2030 - WSF19POP17)/WSF19POP17)
+{txt}
+{com}. 
+. gen log_Adm3_Area_sqkm = log(Adm3_Area_sqkm)
+{txt}
+{com}. 
+. *-------------------------------------------------------------------------------
+. 
+. *-------------------------------------------------------------------------------
+. *Overall Elasticity estimates (KP Province)
+. est clear
+{res}{txt}
+{com}. 
+. global Models "PrimarySchools MiddleSchools SecondarySchools Colleges Hospitals WholesaleMarkets"
+{txt}
+{com}. 
+. foreach var of varlist $Models {c -(}
+{txt}  2{com}.         
+.         eststo `var' : reg `var' log_WSF19POP17 c.log_WSF19POP17#i.NMDs
+{txt}  3{com}.         
+.         predict `var'_yhat, xb
+{txt}  4{com}.         predict `var'_delta, residuals
+{txt}  5{com}.         
+.         replace `var'_yhat = round(`var'_yhat)
+{txt}  6{com}.         replace `var'_delta = round(`var'_delta)
+{txt}  7{com}.         
+.         gen `var'_yhat_2025 = round(`var'_yhat * (1+pop_gr2025))   //delta prjection 2025
+{txt}  8{com}.         gen `var'_yhat_2030 = round(`var'_yhat * (1+pop_gr2030))   //delta prjection 2030
+{txt}  9{com}.         
+.         gen `var'_delta_2025 = round(`var'_delta * (1+pop_gr2025))   //delta prjection 2025
+{txt} 10{com}.         gen `var'_delta_2030 = round(`var'_delta * (1+pop_gr2030))   //delta prjection 2030
+{txt} 11{com}. 
+.         outreg2 . using "$tables/elasticity_estimates_`var'.xls", replace
+{txt} 12{com}. 
+. {c )-}
+
+{txt}      Source {c |}       SS           df       MS      Number of obs   ={res}       133
+{txt}{hline 13}{c +}{hline 34}   F(2, 130)       = {res}    15.57
+{txt}       Model {c |} {res} 165245.624         2  82622.8122   {txt}Prob > F        ={res}    0.0000
+{txt}    Residual {c |} {res} 689785.112       130  5306.03933   {txt}R-squared       ={res}    0.1933
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.1809
+{txt}       Total {c |} {res} 855030.737       132  6477.50558   {txt}Root MSE        =   {res} 72.843
+
+{txt}{hline 22}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}       PrimarySchools{col 23}{c |} Coefficient{col 35}  Std. err.{col 47}      t{col 55}   P>|t|{col 63}     [95% con{col 76}f. interval]
+{hline 22}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 7}log_WSF19POP17 {c |}{col 23}{res}{space 2} 14.78637{col 35}{space 2} 5.289791{col 46}{space 1}    2.80{col 55}{space 3}0.006{col 63}{space 4} 4.321155{col 76}{space 3} 25.25159
+{txt}{space 21} {c |}
+NMDs#c.log_WSF19POP17 {c |}
+{space 19}1  {c |}{col 23}{res}{space 2}-4.767571{col 35}{space 2}  1.31095{col 46}{space 1}   -3.64{col 55}{space 3}0.000{col 63}{space 4} -7.36113{col 76}{space 3}-2.174013
+{txt}{space 21} {c |}
+{space 16}_cons {c |}{col 23}{res}{space 2}-68.50664{col 35}{space 2} 64.35691{col 46}{space 1}   -1.06{col 55}{space 3}0.289{col 63}{space 4}-195.8291{col 76}{space 3}  58.8158
+{txt}{hline 22}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}(133 real changes made)
+(133 real changes made)
+{browse `"C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_PrimarySchools.xls"'}
+{browse `"C:\Users\wb578340\OneDrive - WBG\Documents\WB_FY2023\KPK Population Growth Analysis\KP_Pop_ServiceAccessibility_Project"' :dir}{com} : {txt}{stata `"seeout using "C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_PrimarySchools.txt""':seeout}
+
+      Source {c |}       SS           df       MS      Number of obs   ={res}       133
+{txt}{hline 13}{c +}{hline 34}   F(2, 130)       = {res}    26.45
+{txt}       Model {c |} {res} 52335.0853         2  26167.5426   {txt}Prob > F        ={res}    0.0000
+{txt}    Residual {c |} {res} 128596.479       130  989.203682   {txt}R-squared       ={res}    0.2893
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.2783
+{txt}       Total {c |} {res} 180931.564       132  1370.69367   {txt}Root MSE        =   {res} 31.452
+
+{txt}{hline 22}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}        MiddleSchools{col 23}{c |} Coefficient{col 35}  Std. err.{col 47}      t{col 55}   P>|t|{col 63}     [95% con{col 76}f. interval]
+{hline 22}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 7}log_WSF19POP17 {c |}{col 23}{res}{space 2} 9.709965{col 35}{space 2}    2.284{col 46}{space 1}    4.25{col 55}{space 3}0.000{col 63}{space 4} 5.191344{col 76}{space 3} 14.22859
+{txt}{space 21} {c |}
+NMDs#c.log_WSF19POP17 {c |}
+{space 19}1  {c |}{col 23}{res}{space 2}-2.359203{col 35}{space 2} .5660358{col 46}{space 1}   -4.17{col 55}{space 3}0.000{col 63}{space 4}-3.479037{col 76}{space 3}-1.239369
+{txt}{space 21} {c |}
+{space 16}_cons {c |}{col 23}{res}{space 2}-64.14982{col 35}{space 2} 27.78771{col 46}{space 1}   -2.31{col 55}{space 3}0.023{col 63}{space 4}-119.1245{col 76}{space 3} -9.17515
+{txt}{hline 22}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}(133 real changes made)
+(133 real changes made)
+{browse `"C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_MiddleSchools.xls"'}
+{browse `"C:\Users\wb578340\OneDrive - WBG\Documents\WB_FY2023\KPK Population Growth Analysis\KP_Pop_ServiceAccessibility_Project"' :dir}{com} : {txt}{stata `"seeout using "C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_MiddleSchools.txt""':seeout}
+
+      Source {c |}       SS           df       MS      Number of obs   ={res}       133
+{txt}{hline 13}{c +}{hline 34}   F(2, 130)       = {res}    30.59
+{txt}       Model {c |} {res} 23279.1794         2  11639.5897   {txt}Prob > F        ={res}    0.0000
+{txt}    Residual {c |} {res} 49466.9259       130  380.514815   {txt}R-squared       ={res}    0.3200
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.3095
+{txt}       Total {c |} {res} 72746.1053       132  551.106858   {txt}Root MSE        =   {res} 19.507
+
+{txt}{hline 22}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}     SecondarySchools{col 23}{c |} Coefficient{col 35}  Std. err.{col 47}      t{col 55}   P>|t|{col 63}     [95% con{col 76}f. interval]
+{hline 22}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 7}log_WSF19POP17 {c |}{col 23}{res}{space 2} 6.882551{col 35}{space 2} 1.416573{col 46}{space 1}    4.86{col 55}{space 3}0.000{col 63}{space 4}  4.08003{col 76}{space 3} 9.685072
+{txt}{space 21} {c |}
+NMDs#c.log_WSF19POP17 {c |}
+{space 19}1  {c |}{col 23}{res}{space 2}-1.468299{col 35}{space 2} .3510644{col 46}{space 1}   -4.18{col 55}{space 3}0.000{col 63}{space 4}-2.162838{col 76}{space 3}-.7737596
+{txt}{space 21} {c |}
+{space 16}_cons {c |}{col 23}{res}{space 2} -52.2076{col 35}{space 2} 17.23438{col 46}{space 1}   -3.03{col 55}{space 3}0.003{col 63}{space 4}-86.30377{col 76}{space 3}-18.11144
+{txt}{hline 22}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}(133 real changes made)
+(133 real changes made)
+{browse `"C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_SecondarySchools.xls"'}
+{browse `"C:\Users\wb578340\OneDrive - WBG\Documents\WB_FY2023\KPK Population Growth Analysis\KP_Pop_ServiceAccessibility_Project"' :dir}{com} : {txt}{stata `"seeout using "C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_SecondarySchools.txt""':seeout}
+
+      Source {c |}       SS           df       MS      Number of obs   ={res}       133
+{txt}{hline 13}{c +}{hline 34}   F(2, 130)       = {res}    17.26
+{txt}       Model {c |} {res} 776.110603         2  388.055302   {txt}Prob > F        ={res}    0.0000
+{txt}    Residual {c |} {res} 2922.91195       130  22.4839381   {txt}R-squared       ={res}    0.2098
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.1977
+{txt}       Total {c |} {res} 3699.02256       132  28.0228982   {txt}Root MSE        =   {res} 4.7417
+
+{txt}{hline 22}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}             Colleges{col 23}{c |} Coefficient{col 35}  Std. err.{col 47}      t{col 55}   P>|t|{col 63}     [95% con{col 76}f. interval]
+{hline 22}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 7}log_WSF19POP17 {c |}{col 23}{res}{space 2} 1.374631{col 35}{space 2} .3443416{col 46}{space 1}    3.99{col 55}{space 3}0.000{col 63}{space 4} .6933923{col 76}{space 3}  2.05587
+{txt}{space 21} {c |}
+NMDs#c.log_WSF19POP17 {c |}
+{space 19}1  {c |}{col 23}{res}{space 2}-.2347992{col 35}{space 2}  .085337{col 46}{space 1}   -2.75{col 55}{space 3}0.007{col 63}{space 4}-.4036282{col 76}{space 3}-.0659702
+{txt}{space 21} {c |}
+{space 16}_cons {c |}{col 23}{res}{space 2}-11.28383{col 35}{space 2} 4.189345{col 46}{space 1}   -2.69{col 55}{space 3}0.008{col 63}{space 4}-19.57195{col 76}{space 3}-2.995711
+{txt}{hline 22}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}(133 real changes made)
+(133 real changes made)
+{browse `"C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_Colleges.xls"'}
+{browse `"C:\Users\wb578340\OneDrive - WBG\Documents\WB_FY2023\KPK Population Growth Analysis\KP_Pop_ServiceAccessibility_Project"' :dir}{com} : {txt}{stata `"seeout using "C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_Colleges.txt""':seeout}
+
+      Source {c |}       SS           df       MS      Number of obs   ={res}       133
+{txt}{hline 13}{c +}{hline 34}   F(2, 130)       = {res}    18.66
+{txt}       Model {c |} {res} 2136.26669         2  1068.13335   {txt}Prob > F        ={res}    0.0000
+{txt}    Residual {c |} {res} 7441.50774       130  57.2423672   {txt}R-squared       ={res}    0.2230
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.2111
+{txt}       Total {c |} {res} 9577.77444       132  72.5588972   {txt}Root MSE        =   {res} 7.5659
+
+{txt}{hline 22}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}            Hospitals{col 23}{c |} Coefficient{col 35}  Std. err.{col 47}      t{col 55}   P>|t|{col 63}     [95% con{col 76}f. interval]
+{hline 22}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 7}log_WSF19POP17 {c |}{col 23}{res}{space 2} 2.319663{col 35}{space 2} .5494296{col 46}{space 1}    4.22{col 55}{space 3}0.000{col 63}{space 4} 1.232682{col 76}{space 3} 3.406644
+{txt}{space 21} {c |}
+NMDs#c.log_WSF19POP17 {c |}
+{space 19}1  {c |}{col 23}{res}{space 2}-.3777593{col 35}{space 2} .1361632{col 46}{space 1}   -2.77{col 55}{space 3}0.006{col 63}{space 4}-.6471419{col 76}{space 3}-.1083766
+{txt}{space 21} {c |}
+{space 16}_cons {c |}{col 23}{res}{space 2}-16.48259{col 35}{space 2} 6.684497{col 46}{space 1}   -2.47{col 55}{space 3}0.015{col 63}{space 4}-29.70706{col 76}{space 3}-3.258109
+{txt}{hline 22}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}(133 real changes made)
+(133 real changes made)
+{browse `"C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_Hospitals.xls"'}
+{browse `"C:\Users\wb578340\OneDrive - WBG\Documents\WB_FY2023\KPK Population Growth Analysis\KP_Pop_ServiceAccessibility_Project"' :dir}{com} : {txt}{stata `"seeout using "C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_Hospitals.txt""':seeout}
+
+      Source {c |}       SS           df       MS      Number of obs   ={res}       133
+{txt}{hline 13}{c +}{hline 34}   F(2, 130)       = {res}     7.96
+{txt}       Model {c |} {res} 105.923157         2  52.9615785   {txt}Prob > F        ={res}    0.0005
+{txt}    Residual {c |} {res} 865.069324       130  6.65437942   {txt}R-squared       ={res}    0.1091
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.0954
+{txt}       Total {c |} {res} 970.992481       132  7.35600365   {txt}Root MSE        =   {res} 2.5796
+
+{txt}{hline 22}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}     WholesaleMarkets{col 23}{c |} Coefficient{col 35}  Std. err.{col 47}      t{col 55}   P>|t|{col 63}     [95% con{col 76}f. interval]
+{hline 22}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 7}log_WSF19POP17 {c |}{col 23}{res}{space 2} .5609175{col 35}{space 2} .1873299{col 46}{space 1}    2.99{col 55}{space 3}0.003{col 63}{space 4} .1903077{col 76}{space 3} .9315272
+{txt}{space 21} {c |}
+NMDs#c.log_WSF19POP17 {c |}
+{space 19}1  {c |}{col 23}{res}{space 2}-.0696658{col 35}{space 2} .0464253{col 46}{space 1}   -1.50{col 55}{space 3}0.136{col 63}{space 4}-.1615127{col 76}{space 3} .0221812
+{txt}{space 21} {c |}
+{space 16}_cons {c |}{col 23}{res}{space 2}-4.243508{col 35}{space 2} 2.279102{col 46}{space 1}   -1.86{col 55}{space 3}0.065{col 63}{space 4}-8.752438{col 76}{space 3} .2654224
+{txt}{hline 22}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}(133 real changes made)
+(133 real changes made)
+{browse `"C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_WholesaleMarkets.xls"'}
+{browse `"C:\Users\wb578340\OneDrive - WBG\Documents\WB_FY2023\KPK Population Growth Analysis\KP_Pop_ServiceAccessibility_Project"' :dir}{com} : {txt}{stata `"seeout using "C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_WholesaleMarkets.txt""':seeout}
 
 {com}. 
+. est dir
+
+{txt}{hline 13}{c TT}{hline 50}
+             {c |}           Dependent  Number of        
+        Name {c |} Command    variable     param.  Title 
+{hline 13}{c +}{hline 50}
+{ralign 12:{stata estimates replay PrimarySchools:PrimarySch~s}}{col 14}{txt:{c |}}{res}{col 16}{lalign 10:regress}{col 26}{ralign 9:PrimarySch~s}{col 42}   4{col 48}{it:Linear regression}
+{txt}{ralign 12:{stata estimates replay MiddleSchools:MiddleScho~s}}{col 14}{txt:{c |}}{res}{col 16}{lalign 10:regress}{col 26}{ralign 9:MiddleScho~s}{col 42}   4{col 48}{it:Linear regression}
+{txt}{ralign 12:{stata estimates replay SecondarySchools:SecondaryS~s}}{col 14}{txt:{c |}}{res}{col 16}{lalign 10:regress}{col 26}{ralign 9:SecondaryS~s}{col 42}   4{col 48}{it:Linear regression}
+{txt}{ralign 12:{stata estimates replay Colleges:Colleges}}{col 14}{txt:{c |}}{res}{col 16}{lalign 10:regress}{col 26}{ralign 9:Colleges}{col 42}   4{col 48}{it:Linear regression}
+{txt}{ralign 12:{stata estimates replay Hospitals:Hospitals}}{col 14}{txt:{c |}}{res}{col 16}{lalign 10:regress}{col 26}{ralign 9:Hospitals}{col 42}   4{col 48}{it:Linear regression}
+{txt}{ralign 12:{stata estimates replay WholesaleMarkets:WholesaleM~s}}{col 14}{txt:{c |}}{res}{col 16}{lalign 10:regress}{col 26}{ralign 9:WholesaleM~s}{col 42}   4{col 48}{it:Linear regression}
+{txt}{hline 13}{c BT}{hline 50}
+
+{com}. *-------------------------------------------------------------------------------
+. 
+. *Deltas Visualization for NMD tehsils in KP
+. 
+. graph hbar PrimarySchools_delta PrimarySchools_delta_2025 PrimarySchools_delta_2030 if NMDs == 1, over(ADM3_NAME, sort(PrimarySchools_delta descending) lab(labsize(tiny))) ytitle("Predictions (number of primary schools)") title("Model Predictions: y-yhat") subtitle("Newly Merged Tehsils")  legend( label(1 "Primary Schools 2019") label(2 "Primary Schools 2025") label(3 "Primary Schools 2030") ) 
+{res}{txt}
+{com}. graph export "$figures/primary_tehsil_deltas.png", replace  
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/primary_tehsil_deltas.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. graph hbar MiddleSchools_delta MiddleSchools_delta_2025 MiddleSchools_delta_2030 if NMDs == 1, over(ADM3_NAME, sort(MiddleSchools_delta descending) lab(labsize(tiny))) ytitle("Predictions (number of middle schools)") title("Model Predictions: y-yhat") subtitle("Newly Merged Tehsils")  legend( label(1 "Middle Schools 2019") label(2 "Middle Schools 2025") label(3 "Midddle Schools 2030") ) 
+{res}{txt}
+{com}. graph export "$figures/middle_tehsil_deltas.png", replace  
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/middle_tehsil_deltas.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. graph hbar SecondarySchools_delta SecondarySchools_delta_2025 SecondarySchools_delta_2030 if NMDs == 1, over(ADM3_NAME, sort(SecondarySchools_delta descending) lab(labsize(tiny))) ytitle("Predictions (number of secondary schools)") title("Model Predictions: y-yhat") subtitle("Newly Merged Tehsils")  legend( label(1 "Secondary Schools 2019") label(2 "Secondary Schools 2025") label(3 "Secondary Schools 2030") ) 
+{res}{txt}
+{com}. graph export "$figures/Secondary_tehsil_deltas.png", replace  
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/Secondary_tehsil_deltas.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. 
+. graph hbar Hospitals_delta Hospitals_delta_2025 Hospitals_delta_2030 if NMDs == 1, over(ADM3_NAME, sort(Hospitals_delta descending) lab(labsize(tiny))) ytitle("Predictions (number of secondary schools)") title("Model Predictions: y-yhat") subtitle("Newly Merged Tehsils")  legend( label(1 "Hospitals 2019") label(2 "Hospitals 2025") label(3 "Hospitals 2030") ) 
+{res}{txt}
+{com}. graph export "$figures/hospitals_tehsil_deltas.png", replace  
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/hospitals_tehsil_deltas.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. *-------------------------------------------------------------------------------
+. *Coef plot for over all KP
+. 
+. coefplot $Models , yline(0) vertical title("Elasticity Estimates (Log Linear)") ///
+> ytitle("Change in basic services due to Population Growth (%)") drop(_cons) ///
+>                   recast(bar) ciopts(recast(rcap)) citop barwidt(0.07) ///  subtitle("Controlling for NMDs Fixed Effect") 
+>                   note("Source: Authors' calculations based on Mouza Census 2020 & WSF19")
+{res}{txt}
+{com}. graph export "$figures/coefplot_allcategories.png", replace     
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/coefplot_allcategories.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. *-------------------------------------------------------------------------------
+. *Elasticity Estimates KP :  with and without NMDs
+. 
+. est clear
+{res}{txt}
+{com}. 
+. global Models "PrimarySchools MiddleSchools SecondarySchools Colleges Hospitals WholesaleMarkets"
+{txt}
+{com}. 
+. levelsof NMDs, local(NMD)
+{res}{txt}0 1
+
+{com}. 
+. foreach var of varlist $Models {c -(}
+{txt}  2{com}.         
+.         foreach num of local NMD {c -(}
+{txt}  3{com}.         
+.         eststo `var'_`num' : reg `var' log_WSF19POP17 if NMDs == `num' 
+{txt}  4{com}. 
+.         outreg2 . using "$tables/elasticity_estimates_`var'_`num'.xls", replace
+{txt}  5{com}.         
+.         {c )-}
+{txt}  6{com}. 
+. {c )-}
+
+{txt}      Source {c |}       SS           df       MS      Number of obs   ={res}        93
+{txt}{hline 13}{c +}{hline 34}   F(1, 91)        = {res}     2.11
+{txt}       Model {c |} {res} 15275.1342         1  15275.1342   {txt}Prob > F        ={res}    0.1496
+{txt}    Residual {c |} {res} 658209.791        91  7233.07462   {txt}R-squared       ={res}    0.0227
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.0119
+{txt}       Total {c |} {res} 673484.925        92  7320.48831   {txt}Root MSE        =   {res} 85.047
+
+{txt}{hline 15}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}PrimarySchools{col 16}{c |} Coefficient{col 28}  Std. err.{col 40}      t{col 48}   P>|t|{col 56}     [95% con{col 69}f. interval]
+{hline 15}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+log_WSF19POP17 {c |}{col 16}{res}{space 2} 11.33929{col 28}{space 2} 7.802878{col 39}{space 1}    1.45{col 48}{space 3}0.150{col 56}{space 4}-4.160168{col 69}{space 3} 26.83875
+{txt}{space 9}_cons {c |}{col 16}{res}{space 2}-26.27821{col 28}{space 2} 95.17775{col 39}{space 1}   -0.28{col 48}{space 3}0.783{col 56}{space 4}-215.3371{col 69}{space 3} 162.7807
+{txt}{hline 15}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}{browse `"C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_PrimarySchools_0.xls"'}
+{browse `"C:\Users\wb578340\OneDrive - WBG\Documents\WB_FY2023\KPK Population Growth Analysis\KP_Pop_ServiceAccessibility_Project"' :dir}{com} : {txt}{stata `"seeout using "C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_PrimarySchools_0.txt""':seeout}
+
+      Source {c |}       SS           df       MS      Number of obs   ={res}        40
+{txt}{hline 13}{c +}{hline 34}   F(1, 38)        = {res}    21.54
+{txt}       Model {c |} {res} 15752.4936         1  15752.4936   {txt}Prob > F        ={res}    0.0000
+{txt}    Residual {c |} {res} 27795.9064        38   731.47122   {txt}R-squared       ={res}    0.3617
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.3449
+{txt}       Total {c |} {res}    43548.4        39  1116.62564   {txt}Root MSE        =   {res} 27.046
+
+{txt}{hline 15}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}PrimarySchools{col 16}{c |} Coefficient{col 28}  Std. err.{col 40}      t{col 48}   P>|t|{col 56}     [95% con{col 69}f. interval]
+{hline 15}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+log_WSF19POP17 {c |}{col 16}{res}{space 2} 16.27379{col 28}{space 2} 3.506813{col 39}{space 1}    4.64{col 48}{space 3}0.000{col 56}{space 4} 9.174616{col 69}{space 3} 23.37296
+{txt}{space 9}_cons {c |}{col 16}{res}{space 2}-138.3684{col 28}{space 2} 38.93049{col 39}{space 1}   -3.55{col 48}{space 3}0.001{col 56}{space 4}-217.1791{col 69}{space 3}-59.55775
+{txt}{hline 15}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}{browse `"C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_PrimarySchools_1.xls"'}
+{browse `"C:\Users\wb578340\OneDrive - WBG\Documents\WB_FY2023\KPK Population Growth Analysis\KP_Pop_ServiceAccessibility_Project"' :dir}{com} : {txt}{stata `"seeout using "C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_PrimarySchools_1.txt""':seeout}
+
+      Source {c |}       SS           df       MS      Number of obs   ={res}        93
+{txt}{hline 13}{c +}{hline 34}   F(1, 91)        = {res}     8.83
+{txt}       Model {c |} {res} 12065.5139         1  12065.5139   {txt}Prob > F        ={res}    0.0038
+{txt}    Residual {c |} {res} 124284.293        91  1365.76146   {txt}R-squared       ={res}    0.0885
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.0785
+{txt}       Total {c |} {res} 136349.806        92  1482.06311   {txt}Root MSE        =   {res} 36.956
+
+{txt}{hline 15}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1} MiddleSchools{col 16}{c |} Coefficient{col 28}  Std. err.{col 40}      t{col 48}   P>|t|{col 56}     [95% con{col 69}f. interval]
+{hline 15}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+log_WSF19POP17 {c |}{col 16}{res}{space 2} 10.07781{col 28}{space 2} 3.390633{col 39}{space 1}    2.97{col 48}{space 3}0.004{col 56}{space 4} 3.342736{col 69}{space 3} 16.81289
+{txt}{space 9}_cons {c |}{col 16}{res}{space 2}-68.65611{col 28}{space 2} 41.35818{col 39}{space 1}   -1.66{col 48}{space 3}0.100{col 56}{space 4}-150.8091{col 69}{space 3} 13.49683
+{txt}{hline 15}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}{browse `"C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_MiddleSchools_0.xls"'}
+{browse `"C:\Users\wb578340\OneDrive - WBG\Documents\WB_FY2023\KPK Population Growth Analysis\KP_Pop_ServiceAccessibility_Project"' :dir}{com} : {txt}{stata `"seeout using "C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_MiddleSchools_0.txt""':seeout}
+
+      Source {c |}       SS           df       MS      Number of obs   ={res}        40
+{txt}{hline 13}{c +}{hline 34}   F(1, 38)        = {res}    23.65
+{txt}       Model {c |} {res}  2656.7522         1   2656.7522   {txt}Prob > F        ={res}    0.0000
+{txt}    Residual {c |} {res}  4269.1478        38  112.345995   {txt}R-squared       ={res}    0.3836
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.3674
+{txt}       Total {c |} {res}     6925.9        39  177.587179   {txt}Root MSE        =   {res} 10.599
+
+{txt}{hline 15}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1} MiddleSchools{col 16}{c |} Coefficient{col 28}  Std. err.{col 40}      t{col 48}   P>|t|{col 56}     [95% con{col 69}f. interval]
+{hline 15}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+log_WSF19POP17 {c |}{col 16}{res}{space 2} 6.683278{col 28}{space 2} 1.374336{col 39}{space 1}    4.86{col 48}{space 3}0.000{col 56}{space 4} 3.901081{col 69}{space 3} 9.465474
+{txt}{space 9}_cons {c |}{col 16}{res}{space 2} -56.6947{col 28}{space 2} 15.25703{col 39}{space 1}   -3.72{col 48}{space 3}0.001{col 56}{space 4}-87.58095{col 69}{space 3}-25.80845
+{txt}{hline 15}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}{browse `"C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_MiddleSchools_1.xls"'}
+{browse `"C:\Users\wb578340\OneDrive - WBG\Documents\WB_FY2023\KPK Population Growth Analysis\KP_Pop_ServiceAccessibility_Project"' :dir}{com} : {txt}{stata `"seeout using "C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_MiddleSchools_1.txt""':seeout}
+
+      Source {c |}       SS           df       MS      Number of obs   ={res}        93
+{txt}{hline 13}{c +}{hline 34}   F(1, 91)        = {res}    14.01
+{txt}       Model {c |} {res} 7351.35838         1  7351.35838   {txt}Prob > F        ={res}    0.0003
+{txt}    Residual {c |} {res} 47735.3728        91  524.564536   {txt}R-squared       ={res}    0.1335
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.1239
+{txt}       Total {c |} {res} 55086.7312        92  598.768817   {txt}Root MSE        =   {res} 22.903
+
+{txt}{hline 15}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}SecondarySch~s{col 16}{c |} Coefficient{col 28}  Std. err.{col 40}      t{col 48}   P>|t|{col 56}     [95% con{col 69}f. interval]
+{hline 15}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+log_WSF19POP17 {c |}{col 16}{res}{space 2}  7.86642{col 28}{space 2} 2.101323{col 39}{space 1}    3.74{col 48}{space 3}0.000{col 56}{space 4}   3.6924{col 69}{space 3} 12.04044
+{txt}{space 9}_cons {c |}{col 16}{res}{space 2}-64.26046{col 28}{space 2} 25.63146{col 39}{space 1}   -2.51{col 48}{space 3}0.014{col 56}{space 4}-115.1742{col 69}{space 3}-13.34671
+{txt}{hline 15}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}{browse `"C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_SecondarySchools_0.xls"'}
+{browse `"C:\Users\wb578340\OneDrive - WBG\Documents\WB_FY2023\KPK Population Growth Analysis\KP_Pop_ServiceAccessibility_Project"' :dir}{com} : {txt}{stata `"seeout using "C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_SecondarySchools_0.txt""':seeout}
+
+      Source {c |}       SS           df       MS      Number of obs   ={res}        40
+{txt}{hline 13}{c +}{hline 34}   F(1, 38)        = {res}    20.91
+{txt}       Model {c |} {res} 783.311439         1  783.311439   {txt}Prob > F        ={res}    0.0000
+{txt}    Residual {c |} {res} 1423.66356        38  37.4648306   {txt}R-squared       ={res}    0.3549
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.3379
+{txt}       Total {c |} {res}   2206.975        39  56.5891026   {txt}Root MSE        =   {res} 6.1209
+
+{txt}{hline 15}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}SecondarySch~s{col 16}{c |} Coefficient{col 28}  Std. err.{col 40}      t{col 48}   P>|t|{col 56}     [95% con{col 69}f. interval]
+{hline 15}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+log_WSF19POP17 {c |}{col 16}{res}{space 2} 3.628952{col 28}{space 2} .7936442{col 39}{space 1}    4.57{col 48}{space 3}0.000{col 56}{space 4} 2.022303{col 69}{space 3} 5.235601
+{txt}{space 9}_cons {c |}{col 16}{res}{space 2}-32.26762{col 28}{space 2} 8.810553{col 39}{space 1}   -3.66{col 48}{space 3}0.001{col 56}{space 4}-50.10366{col 69}{space 3}-14.43159
+{txt}{hline 15}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}{browse `"C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_SecondarySchools_1.xls"'}
+{browse `"C:\Users\wb578340\OneDrive - WBG\Documents\WB_FY2023\KPK Population Growth Analysis\KP_Pop_ServiceAccessibility_Project"' :dir}{com} : {txt}{stata `"seeout using "C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_SecondarySchools_1.txt""':seeout}
+
+      Source {c |}       SS           df       MS      Number of obs   ={res}        93
+{txt}{hline 13}{c +}{hline 34}   F(1, 91)        = {res}    10.06
+{txt}       Model {c |} {res} 306.575728         1  306.575728   {txt}Prob > F        ={res}    0.0021
+{txt}    Residual {c |} {res} 2773.48879        91  30.4778988   {txt}R-squared       ={res}    0.0995
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.0896
+{txt}       Total {c |} {res} 3080.06452        92  33.4789621   {txt}Root MSE        =   {res} 5.5207
+
+{txt}{hline 15}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}      Colleges{col 16}{c |} Coefficient{col 28}  Std. err.{col 40}      t{col 48}   P>|t|{col 56}     [95% con{col 69}f. interval]
+{hline 15}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+log_WSF19POP17 {c |}{col 16}{res}{space 2} 1.606431{col 28}{space 2} .5065074{col 39}{space 1}    3.17{col 48}{space 3}0.002{col 56}{space 4} .6003167{col 69}{space 3} 2.612546
+{txt}{space 9}_cons {c |}{col 16}{res}{space 2} -14.1235{col 28}{space 2} 6.178264{col 39}{space 1}   -2.29{col 48}{space 3}0.025{col 56}{space 4}-26.39586{col 69}{space 3}-1.851133
+{txt}{hline 15}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}{browse `"C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_Colleges_0.xls"'}
+{browse `"C:\Users\wb578340\OneDrive - WBG\Documents\WB_FY2023\KPK Population Growth Analysis\KP_Pop_ServiceAccessibility_Project"' :dir}{com} : {txt}{stata `"seeout using "C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_Colleges_0.txt""':seeout}
+
+      Source {c |}       SS           df       MS      Number of obs   ={res}        40
+{txt}{hline 13}{c +}{hline 34}   F(1, 38)        = {res}     8.83
+{txt}       Model {c |} {res} 30.7671319         1  30.7671319   {txt}Prob > F        ={res}    0.0051
+{txt}    Residual {c |} {res} 132.332868        38   3.4824439   {txt}R-squared       ={res}    0.1886
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.1673
+{txt}       Total {c |} {res}      163.1        39  4.18205128   {txt}Root MSE        =   {res} 1.8661
+
+{txt}{hline 15}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}      Colleges{col 16}{c |} Coefficient{col 28}  Std. err.{col 40}      t{col 48}   P>|t|{col 56}     [95% con{col 69}f. interval]
+{hline 15}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+log_WSF19POP17 {c |}{col 16}{res}{space 2} .7192129{col 28}{space 2} .2419669{col 39}{space 1}    2.97{col 48}{space 3}0.005{col 56}{space 4} .2293765{col 69}{space 3} 1.209049
+{txt}{space 9}_cons {c |}{col 16}{res}{space 2}-6.585948{col 28}{space 2} 2.686169{col 39}{space 1}   -2.45{col 48}{space 3}0.019{col 56}{space 4}-12.02381{col 69}{space 3}-1.148083
+{txt}{hline 15}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}{browse `"C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_Colleges_1.xls"'}
+{browse `"C:\Users\wb578340\OneDrive - WBG\Documents\WB_FY2023\KPK Population Growth Analysis\KP_Pop_ServiceAccessibility_Project"' :dir}{com} : {txt}{stata `"seeout using "C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_Colleges_1.txt""':seeout}
+
+      Source {c |}       SS           df       MS      Number of obs   ={res}        93
+{txt}{hline 13}{c +}{hline 34}   F(1, 91)        = {res}     9.34
+{txt}       Model {c |} {res} 709.147056         1  709.147056   {txt}Prob > F        ={res}    0.0029
+{txt}    Residual {c |} {res} 6907.17552        91  75.9030277   {txt}R-squared       ={res}    0.0931
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.0831
+{txt}       Total {c |} {res} 7616.32258        92   82.786115   {txt}Root MSE        =   {res} 8.7122
+
+{txt}{hline 15}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}     Hospitals{col 16}{c |} Coefficient{col 28}  Std. err.{col 40}      t{col 48}   P>|t|{col 56}     [95% con{col 69}f. interval]
+{hline 15}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+log_WSF19POP17 {c |}{col 16}{res}{space 2} 2.443214{col 28}{space 2}  .799324{col 39}{space 1}    3.06{col 48}{space 3}0.003{col 56}{space 4} .8554548{col 69}{space 3} 4.030973
+{txt}{space 9}_cons {c |}{col 16}{res}{space 2}-17.99615{col 28}{space 2} 9.749975{col 39}{space 1}   -1.85{col 48}{space 3}0.068{col 56}{space 4}-37.36327{col 69}{space 3} 1.370982
+{txt}{hline 15}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}{browse `"C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_Hospitals_0.xls"'}
+{browse `"C:\Users\wb578340\OneDrive - WBG\Documents\WB_FY2023\KPK Population Growth Analysis\KP_Pop_ServiceAccessibility_Project"' :dir}{com} : {txt}{stata `"seeout using "C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_Hospitals_0.txt""':seeout}
+
+      Source {c |}       SS           df       MS      Number of obs   ={res}        40
+{txt}{hline 13}{c +}{hline 34}   F(1, 38)        = {res}    12.60
+{txt}       Model {c |} {res} 175.498056         1  175.498056   {txt}Prob > F        ={res}    0.0010
+{txt}    Residual {c |} {res} 529.476944        38  13.9336038   {txt}R-squared       ={res}    0.2489
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.2292
+{txt}       Total {c |} {res}    704.975        39  18.0762821   {txt}Root MSE        =   {res} 3.7328
+
+{txt}{hline 15}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}     Hospitals{col 16}{c |} Coefficient{col 28}  Std. err.{col 40}      t{col 48}   P>|t|{col 56}     [95% con{col 69}f. interval]
+{hline 15}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+log_WSF19POP17 {c |}{col 16}{res}{space 2} 1.717711{col 28}{space 2} .4840004{col 39}{space 1}    3.55{col 48}{space 3}0.001{col 56}{space 4} .7379036{col 69}{space 3} 2.697519
+{txt}{space 9}_cons {c |}{col 16}{res}{space 2}-13.97859{col 28}{space 2} 5.373076{col 39}{space 1}   -2.60{col 48}{space 3}0.013{col 56}{space 4}-24.85581{col 69}{space 3}-3.101364
+{txt}{hline 15}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}{browse `"C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_Hospitals_1.xls"'}
+{browse `"C:\Users\wb578340\OneDrive - WBG\Documents\WB_FY2023\KPK Population Growth Analysis\KP_Pop_ServiceAccessibility_Project"' :dir}{com} : {txt}{stata `"seeout using "C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_Hospitals_1.txt""':seeout}
+
+      Source {c |}       SS           df       MS      Number of obs   ={res}        93
+{txt}{hline 13}{c +}{hline 34}   F(1, 91)        = {res}     2.91
+{txt}       Model {c |} {res} 24.0813688         1  24.0813688   {txt}Prob > F        ={res}    0.0913
+{txt}    Residual {c |} {res} 752.563792        91  8.26993179   {txt}R-squared       ={res}    0.0310
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.0204
+{txt}       Total {c |} {res} 776.645161        92  8.44179523   {txt}Root MSE        =   {res} 2.8757
+
+{txt}{hline 15}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}WholesaleMar~s{col 16}{c |} Coefficient{col 28}  Std. err.{col 40}      t{col 48}   P>|t|{col 56}     [95% con{col 69}f. interval]
+{hline 15}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+log_WSF19POP17 {c |}{col 16}{res}{space 2} .4502295{col 28}{space 2} .2638422{col 39}{space 1}    1.71{col 48}{space 3}0.091{col 56}{space 4}-.0738607{col 69}{space 3} .9743196
+{txt}{space 9}_cons {c |}{col 16}{res}{space 2}-2.887527{col 28}{space 2} 3.218288{col 39}{space 1}   -0.90{col 48}{space 3}0.372{col 56}{space 4}-9.280261{col 69}{space 3} 3.505207
+{txt}{hline 15}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}{browse `"C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_WholesaleMarkets_0.xls"'}
+{browse `"C:\Users\wb578340\OneDrive - WBG\Documents\WB_FY2023\KPK Population Growth Analysis\KP_Pop_ServiceAccessibility_Project"' :dir}{com} : {txt}{stata `"seeout using "C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_WholesaleMarkets_0.txt""':seeout}
+
+      Source {c |}       SS           df       MS      Number of obs   ={res}        40
+{txt}{hline 13}{c +}{hline 34}   F(1, 38)        = {res}     9.97
+{txt}       Model {c |} {res} 28.4913927         1  28.4913927   {txt}Prob > F        ={res}    0.0031
+{txt}    Residual {c |} {res} 108.608607        38  2.85812125   {txt}R-squared       ={res}    0.2078
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.1870
+{txt}       Total {c |} {res}      137.1        39  3.51538462   {txt}Root MSE        =   {res} 1.6906
+
+{txt}{hline 15}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}WholesaleMar~s{col 16}{c |} Coefficient{col 28}  Std. err.{col 40}      t{col 48}   P>|t|{col 56}     [95% con{col 69}f. interval]
+{hline 15}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+log_WSF19POP17 {c |}{col 16}{res}{space 2} .6921031{col 28}{space 2} .2192069{col 39}{space 1}    3.16{col 48}{space 3}0.003{col 56}{space 4} .2483419{col 69}{space 3} 1.135864
+{txt}{space 9}_cons {c |}{col 16}{res}{space 2}-6.486812{col 28}{space 2} 2.433501{col 39}{space 1}   -2.67{col 48}{space 3}0.011{col 56}{space 4}-11.41318{col 69}{space 3}-1.560446
+{txt}{hline 15}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}{browse `"C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_WholesaleMarkets_1.xls"'}
+{browse `"C:\Users\wb578340\OneDrive - WBG\Documents\WB_FY2023\KPK Population Growth Analysis\KP_Pop_ServiceAccessibility_Project"' :dir}{com} : {txt}{stata `"seeout using "C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/tables/elasticity_estimates_WholesaleMarkets_1.txt""':seeout}
+
+{com}. 
+. est dir
+
+{txt}{hline 13}{c TT}{hline 50}
+             {c |}           Dependent  Number of        
+        Name {c |} Command    variable     param.  Title 
+{hline 13}{c +}{hline 50}
+{ralign 12:{stata estimates replay PrimarySchools_0:PrimarySc~_0}}{col 14}{txt:{c |}}{res}{col 16}{lalign 10:regress}{col 26}{ralign 9:PrimarySch~s}{col 42}   2{col 48}{it:Linear regression}
+{txt}{ralign 12:{stata estimates replay PrimarySchools_1:PrimarySch~1}}{col 14}{txt:{c |}}{res}{col 16}{lalign 10:regress}{col 26}{ralign 9:PrimarySch~s}{col 42}   2{col 48}{it:Linear regression}
+{txt}{ralign 12:{stata estimates replay MiddleSchools_0:MiddleSch~_0}}{col 14}{txt:{c |}}{res}{col 16}{lalign 10:regress}{col 26}{ralign 9:MiddleScho~s}{col 42}   2{col 48}{it:Linear regression}
+{txt}{ralign 12:{stata estimates replay MiddleSchools_1:MiddleScho~1}}{col 14}{txt:{c |}}{res}{col 16}{lalign 10:regress}{col 26}{ralign 9:MiddleScho~s}{col 42}   2{col 48}{it:Linear regression}
+{txt}{ralign 12:{stata estimates replay SecondarySchools_0:Secondary~_0}}{col 14}{txt:{c |}}{res}{col 16}{lalign 10:regress}{col 26}{ralign 9:SecondaryS~s}{col 42}   2{col 48}{it:Linear regression}
+{txt}{ralign 12:{stata estimates replay SecondarySchools_1:SecondaryS~1}}{col 14}{txt:{c |}}{res}{col 16}{lalign 10:regress}{col 26}{ralign 9:SecondaryS~s}{col 42}   2{col 48}{it:Linear regression}
+{txt}{ralign 12:{stata estimates replay Colleges_0:Colleges_0}}{col 14}{txt:{c |}}{res}{col 16}{lalign 10:regress}{col 26}{ralign 9:Colleges}{col 42}   2{col 48}{it:Linear regression}
+{txt}{ralign 12:{stata estimates replay Colleges_1:Colleges_1}}{col 14}{txt:{c |}}{res}{col 16}{lalign 10:regress}{col 26}{ralign 9:Colleges}{col 42}   2{col 48}{it:Linear regression}
+{txt}{ralign 12:{stata estimates replay Hospitals_0:Hospitals_0}}{col 14}{txt:{c |}}{res}{col 16}{lalign 10:regress}{col 26}{ralign 9:Hospitals}{col 42}   2{col 48}{it:Linear regression}
+{txt}{ralign 12:{stata estimates replay Hospitals_1:Hospitals_1}}{col 14}{txt:{c |}}{res}{col 16}{lalign 10:regress}{col 26}{ralign 9:Hospitals}{col 42}   2{col 48}{it:Linear regression}
+{txt}{ralign 12:{stata estimates replay WholesaleMarkets_0:Wholesale~_0}}{col 14}{txt:{c |}}{res}{col 16}{lalign 10:regress}{col 26}{ralign 9:WholesaleM~s}{col 42}   2{col 48}{it:Linear regression}
+{txt}{ralign 12:{stata estimates replay WholesaleMarkets_1:WholesaleM~1}}{col 14}{txt:{c |}}{res}{col 16}{lalign 10:regress}{col 26}{ralign 9:WholesaleM~s}{col 42}   2{col 48}{it:Linear regression}
+{txt}{hline 13}{c BT}{hline 50}
+
+{com}. 
+. global Models_NMDs_1 "PrimarySchools_0 PrimarySchools_1" 
+{txt}
+{com}. global Models_NMDs_2 "MiddleSchools_0 MiddleSchools_1" 
+{txt}
+{com}. global Models_NMDs_3 "SecondarySchools_0 SecondarySchools_1" 
+{txt}
+{com}. 
+. global Models_NMDs_4 "Colleges_0 Colleges_1 Hospitals_0 Hospitals_1 WholesaleMarkets_0 WholesaleMarkets_1"
+{txt}
+{com}. *-------------------------------------------------------------------------------
+. *Coefplot for NMDs      vs KP
+. 
+. coefplot  $Models_NMDs_1 $Models_NMDs_2 $Models_NMDs_3 , yline(0) vertical title("Elasticity Estimates (Log Linear)") ///
+>                   subtitle("NMDs vs Rest of the KP") ytitle("Change in basic services due to Population Growth (%)") drop(_cons) ///
+>                   recast(rarea) ciopts(recast(rcap)) citop ///  
+>                   note("Source: Authors' calculations based on Mouza Census 2020 & WSF19") ///
+>                   legend( label(1 "Primary Schools: Rest of KP") label(3 "Primary Schools: NMDs")  ///
+>                   label(5 "Middle Schools: Rest of KP") label(7 "Middle Schools: NMDs")  ///
+>                   label(9 "Secondary Schools: Rest of KP") label(11 "Secondary Schools: NMDs") ) ///
+>                   
+{res}{p 0 4 2}
+{txt}(note:  named style
+rarea not found in class
+yxtype,  default attributes used)
+{p_end}
+{com}{txt}{p 0 8} (note:  yxtype  {com}{txt}not found in scheme, default attributes used){p_end}
+{p 0 4 2}
+{txt}(note:  named style
+rarea not found in class
+yxtype,  default attributes used)
+{p_end}
+{com}{txt}{p 0 8} (note:  yxtype  {com}{txt}not found in scheme, default attributes used){p_end}
+{p 0 4 2}
+{txt}(note:  named style
+rarea not found in class
+yxtype,  default attributes used)
+{p_end}
+{com}{txt}{p 0 8} (note:  yxtype  {com}{txt}not found in scheme, default attributes used){p_end}
+{p 0 4 2}
+{txt}(note:  named style
+rarea not found in class
+yxtype,  default attributes used)
+{p_end}
+{com}{txt}{p 0 8} (note:  yxtype  {com}{txt}not found in scheme, default attributes used){p_end}
+{p 0 4 2}
+{txt}(note:  named style
+rarea not found in class
+yxtype,  default attributes used)
+{p_end}
+{com}{txt}{p 0 8} (note:  yxtype  {com}{txt}not found in scheme, default attributes used){p_end}
+{p 0 4 2}
+{txt}(note:  named style
+rarea not found in class
+yxtype,  default attributes used)
+{p_end}
+{com}{txt}{p 0 8} (note:  yxtype  {com}{txt}not found in scheme, default attributes used){p_end}
+{res}{txt}
+{com}. graph export "$figures/coefplot_schools_withand withoutNMDs.png", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/coefplot_schools_withand withoutNMDs.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. *-------------------------------------------------------------------------------
+. *Coefplot for NMDs      vs KP
+. coefplot  $Models_NMDs_4 , yline(0) vertical title("Elasticity Estimates (Log Linear)") ///
+>                   subtitle("NMDs vs Rest of the KP") ytitle("Change in basic services due to Population Growth (%)") drop(_cons) ///
+>                   recast(rarea) ciopts(recast(rcap)) citop ///  
+>                   note("Source: Authors' calculations based on Mouza Census 2020 & WSF19") ///
+>                   legend( label(1 "Colleges: Rest of KP") label(3 "Colleges: NMDs")  ///
+>                   label(5 "Hospitals: Rest of KP") label(7 "Hospitals: NMDs")  ///
+>                   label(9 "WholesaleMarkets: Rest of KP") label(11 "WholesaleMarkets: NMDs") ) ///
+>         
+{res}{p 0 4 2}
+{txt}(note:  named style
+rarea not found in class
+yxtype,  default attributes used)
+{p_end}
+{com}{txt}{p 0 8} (note:  yxtype  {com}{txt}not found in scheme, default attributes used){p_end}
+{p 0 4 2}
+{txt}(note:  named style
+rarea not found in class
+yxtype,  default attributes used)
+{p_end}
+{com}{txt}{p 0 8} (note:  yxtype  {com}{txt}not found in scheme, default attributes used){p_end}
+{p 0 4 2}
+{txt}(note:  named style
+rarea not found in class
+yxtype,  default attributes used)
+{p_end}
+{com}{txt}{p 0 8} (note:  yxtype  {com}{txt}not found in scheme, default attributes used){p_end}
+{p 0 4 2}
+{txt}(note:  named style
+rarea not found in class
+yxtype,  default attributes used)
+{p_end}
+{com}{txt}{p 0 8} (note:  yxtype  {com}{txt}not found in scheme, default attributes used){p_end}
+{p 0 4 2}
+{txt}(note:  named style
+rarea not found in class
+yxtype,  default attributes used)
+{p_end}
+{com}{txt}{p 0 8} (note:  yxtype  {com}{txt}not found in scheme, default attributes used){p_end}
+{p 0 4 2}
+{txt}(note:  named style
+rarea not found in class
+yxtype,  default attributes used)
+{p_end}
+{com}{txt}{p 0 8} (note:  yxtype  {com}{txt}not found in scheme, default attributes used){p_end}
+{res}{txt}
+{com}. graph export "$figures/coefplot_othercats_withand withoutNMDs.png", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/coefplot_othercats_withand withoutNMDs.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}.         
+. *-------------------------------------------------------------------------------
+. 
+. 
+. *export excel using "$xlsx/facilities_needed_v1.xlsx" if NMDs == 1, first(variable) replace
+. /* Rough
+> 
+> *areg PrimarySchools log_WSF19POP17 c.log_WSF19POP17#c.NMDs  log_WSF19_Pop_densitysqkm, absorb(NMDs)    //Tobediscussed
+> *areg middle_schools log_WSF19POP17 c.log_WSF19POP17#c.NMDs  log_WSF19_Pop_densitysqkm, absorb(NMDs)    //Tobediscussed
+> *areg secondary_schools log_WSF19POP17 c.log_WSF19POP17#c.NMDs  log_WSF19_Pop_densitysqkm, absorb(NMDs)    //Tobediscussed
+> *areg colleges log_WSF19POP17 c.log_WSF19POP17#c.NMDs  log_WSF19_Pop_densitysqkm, absorb(NMDs)    //Tobediscussed
+> *areg wholesale_markets log_WSF19POP17 c.log_WSF19POP17#c.NMDs  log_WSF19_Pop_densitysqkm, absorb(NMDs)    //Tobediscussed
+> 
+> *---
+> eststo PrimarySchools: reg PrimarySchools log_WSF19POP17 c.log_WSF19POP17#i.NMDs  // log_WSF19_Pop_densitysqkm i.NMDs  
+> *eststo PrimarySchools: areg primary_schools log_WSF19POP17 c.log_WSF19POP17#i.NMDs log_WSF19_Pop_densitysqkm , absorb(NMDs)
+> outreg2 . using "$tables/elasticity_estimates_primary_all.xls", replace
+> 
+> *lvr2plot
+> *rvfplot
+> *rvpplot log_WSF19POP17
+> *gen log_WSF19_TehsilPop_2025 = log(WSF19_TehsilPop_2025)
+> *avplots 
+> 
+> *Predict
+> predict primary_schools_pred, xb 
+> predict primary_delta, residuals
+> 
+> *gen delta_primary = primary_schools_pred - primary_schools   //errors
+> 
+> *gen log_WSF19_TehsilPop_2025 = log(WSF19_TehsilPop_2025)
+> gen primary_schools_new =  primary_schools_pred * (1+pop_gr2025)
+> gen primary_schools_needed2025 = round(primary_schools_new - primary_schools_pred) 
+> 
+> *gen schools  = primary_schools + (_b[log_WSF19POP17] * (1+pop_gr2025))
+> *gen new_schools = schools - primary_schools
+> *replace  primary_schools = primary_schools + _b[log_WSF19POP17] * (1+pop_gr2025)
+> *predict primary_schools_p, xb 
+> 
+> *---
+> *Middle schools for boys + girls
+> eststo MiddleSchools: reg MiddleSchools log_WSF19POP17 c.log_WSF19POP17#i.NMDs // log_WSF19_Pop_densitysqkm i.NMDs  
+> *eststo MiddleSchools: areg middle_schools log_WSF19POP17 c.log_WSF19POP17#i.NMDs log_WSF19_Pop_densitysqkm , absorb(NMDs)
+> outreg2 . using "$tables/elasticity_estimates_middle_all.xls", replace
+> 
+> *---
+> *Higher Secondary schools for boys + girls
+> eststo SecondarySchools: reg SecondarySchools log_WSF19POP17 c.log_WSF19POP17#i.NMDs // log_WSF19_Pop_densitysqkm i.NMDs  
+> *eststo SecondarySchools: areg secondary_schools log_WSF19POP17 c.log_WSF19POP17#i.NMDs log_WSF19_Pop_densitysqkm , absorb(NMDs)
+> outreg2 . using "$tables/elasticity_estimates_highersecondary_all.xls", replace
+> 
+> *---
+> *COlleges for boys + girls
+> eststo Colleges: reg Colleges log_WSF19POP17 c.log_WSF19POP17#i.NMDs // log_WSF19_Pop_densitysqkm i.NMDs  
+> *eststo Colleges: areg colleges log_WSF19POP17 c.log_WSF19POP17#i.NMDs log_WSF19_Pop_densitysqkm , absorb(NMDs)
+> outreg2 . using "$tables/elasticity_estimates_colleges_all.xls", replace
+> 
+> *---
+> *Religious schools for boys + girls
+> eststo Madrassahs: reg Madrassahs log_WSF19POP17 c.log_WSF19POP17#i.NMDs // log_WSF19_Pop_densitysqkm i.NMDs  
+> *eststo Madrassahs: areg madrassah log_WSF19POP17 c.log_WSF19POP17#i.NMDs log_WSF19_Pop_densitysqkm , absorb(NMDs)
+> outreg2 . using "$tables/elasticity_estimates_madrassah_all.xls", replace
+> 
+> *---
+> *Health Facilities
+> *eststo Hospitals_PopDensity: reg health_facilities log_WSF19_Pop_densitysqkm  
+> *outreg2 . using "$tables/elasticity_estimates_hlth1.xls", replace
+> 
+> eststo Hospitals: reg Hospitals log_WSF19POP17  c.log_WSF19POP17#i.NMDs //log_WSF19_Pop_densitysqkm i.NMDs 
+> *eststo Hospitals: areg health_facilities log_WSF19POP17  c.log_WSF19POP17#i.NMDs log_WSF19_Pop_densitysqkm , absorb(NMDs)
+> outreg2 . using "$tables/elasticity_estimates_hospitals.xls", replace
+> 
+> *replace hospitals  = hospitals + _b[log_WSF19POP17] * pop_gr2025
+> predict hospitals_pred, xb 
+> predict hospitals_delta, residuals
+> 
+> gen hospitals_new =  hospitals_pred * (1+pop_gr2025)
+> gen hospitals_needed2025 = round(hospitals_new - hospitals_pred) 
+> 
+> *---
+> *POlice Stations
+> *eststo PoliceSt_PopDensity: reg police_stations log_WSF19_Pop_densitysqkm 
+> *outreg2 . using "$tables/elasticity_estimates_adm1.xls", replace
+> 
+> eststo PoliceStations: reg PoliceStations log_WSF19POP17 c.log_WSF19POP17#i.NMDs //log_WSF19_Pop_densitysqkm i.NMDs  
+> *eststo PoliceStations: areg police_stations log_WSF19POP17 c.log_WSF19POP17#i.NMDs log_WSF19_Pop_densitysqkm , absorb(NMDs)
+> outreg2 . using "$tables/elasticity_estimates_policest.xls", replace
+> 
+> *replace  police_stat =  police_stat + _b[log_WSF19POP17] * pop_gr2025
+> predict policestat_pred, xb 
+> predict policestat_delta, residuals 
+> 
+> gen policestat_new =  policestat_pred * (1+pop_gr2025)  
+> gen police_stat_needed2025 = round(policestat_new - policestat_pred) 
+> 
+> *---
+> *Whoelsale Markets
+> eststo WholesaleMarkets: reg WholesaleMarkets log_WSF19POP17 c.log_WSF19POP17#i.NMDs //log_WSF19_Pop_densitysqkm i.NMDs  
+> *eststo WholesaleMarkets: areg wholesale_markets log_WSF19POP17 c.log_WSF19POP17#i.NMDs log_WSF19_Pop_densitysqkm , absorb(NMDs)
+> outreg2 . using "$tables/elasticity_estimates_wholesalemarkets.xls", replace
+> 
+> *---
+> * Markets and Bazzars in mouzas - aggregated at tehsil level
+> eststo Markets: reg Markets log_WSF19POP17 c.log_WSF19POP17#i.NMDs //log_WSF19_Pop_densitysqkm i.NMDs  
+> *eststo Markets: areg markets log_WSF19POP17 c.log_WSF19POP17#i.NMDs log_WSF19_Pop_densitysqkm , absorb(NMDs)
+> outreg2 . using "$tables/elasticity_estimates_markets.xls", replace
+> 
+> est dir
+
+{txt}end of do-file
+
+{com}.         
+. *Descripitve Analytics
+.         do           "do/descriptives.do"       
+{txt}
+{com}. *Descriptive Analysis
+. 
+. *-------------------------------------------------------------------------------
+. graph drop _all
+{txt}
+{com}. *Reading Tehsil level sums for services (Education + Health + admin)
+. use "$output/tehsillevel_services_sums.dta", clear
+{txt}
+{com}. 
+. *merging mouza-shapefile mapping   (Use this file to map mouza census tehsils to map Pak shapefile 2022 tehsils)
+. merge 1:m tehsil using "$output/tehsil_mouzatoshp2022.dta"    //same 133 tehsils matched
+{res}
+{txt}{col 5}Result{col 33}Number of obs
+{col 5}{hline 41}
+{col 5}Not matched{col 30}{res}               7
+{txt}{col 9}from master{col 30}{res}               7{txt}  (_merge==1)
+{col 9}from using{col 30}{res}               0{txt}  (_merge==2)
+
+{col 5}Matched{col 30}{res}             133{txt}  (_merge==3)
+{col 5}{hline 41}
+
+{com}. keep if _m == 3
+{txt}(7 observations deleted)
+
+{com}. drop _m
+{txt}
+{com}. 
+. order ADM3_NAME ADM3_CODE
+{txt}
+{com}. 
+. *Combining with Tehsil level Popualtion numbers
+. merge m:1 ADM3_NAME using  "$output/population_number.dta"   , force   //same 133 tehsils matched
+{res}
+{txt}{col 5}Result{col 33}Number of obs
+{col 5}{hline 41}
+{col 5}Not matched{col 30}{res}              25
+{txt}{col 9}from master{col 30}{res}               0{txt}  (_merge==1)
+{col 9}from using{col 30}{res}              25{txt}  (_merge==2)
+
+{col 5}Matched{col 30}{res}             133{txt}  (_merge==3)
+{col 5}{hline 41}
+
+{com}. keep if _m == 3
+{txt}(25 observations deleted)
+
+{com}. drop _m
+{txt}
+{com}. 
+. order ADM2_NAME-DISP_AREA, before(ADM3_NAME)
+{txt}
+{com}. destring WPOP20, replace force
+{txt}WPOP20: all characters numeric; {res}replaced {txt}as {res}long
+{txt}
+{com}. 
+. *-------------------------------------------------------------------------------
+. 
+. glo kppop WSF19POP17
+{txt}
+{com}. gen WSF19POP17_th = $kppop/1000
+{txt}
+{com}. glo pop WSF19POP17_th
+{txt}
+{com}. 
+. *-------------------------------------------------------------------------------
+. *-------------------------------------------------------------------------------
+. *-------------------------------------------------------------------------------
+. *Education Scatters
+. 
+. /*
+> Scatter with Tehsil population and  each of the service categories
+> */
+. 
+. *--Primary schools
+. twoway (scatter  pri_schl_tot $pop , title("Primary Schools & Population") xtitle("Population (000s)") ytitle("Total Primary Schools (Boys + Girls)") name("graph_primary", replace) legend(off)) (lfit pri_schl_tot $pop) 
+{res}{txt}
+{com}. 
+. graph export "$figures/primary_population_scatter.png", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/primary_population_scatter.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. *--Middle schools
+. twoway (scatter  mid_schl_tot $pop , title("Middle Schools & Population")  xtitle("Population (000s)") ytitle("Total Middle Schools (Boys + Girls)")  name("graph_middle", replace) legend(off)) (lfit mid_schl_tot $pop) 
+{res}{txt}
+{com}. 
+. graph export "$figures/middle_population_scatter.png", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/middle_population_scatter.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. *--Higher Secondary schools
+. twoway (scatter  sec_schl_tot $pop , title("Higher Secondary Schools & Population")  xtitle("Population (000s)") ytitle("Total Higher Secondary Schools (Boys + Girls)")  name("graph_secondary", replace) legend(off)) (lfit sec_schl_tot $pop) 
+{res}{txt}
+{com}. 
+. graph export "$figures/secondary_population_scatter.png", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/secondary_population_scatter.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. *--Colleges
+. twoway (scatter col_tot  $pop , title("Colleges & Population") xtitle("Population (000s)") ytitle("Total Colleges (Boys + Girls)")  name("graph_colleges", replace) legend(off)) (lfit col_tot $pop) 
+{res}{txt}
+{com}. 
+. graph export "$figures/colleges_population_scatter.png", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/colleges_population_scatter.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. graph combine graph_primary graph_middle graph_secondary graph_colleges, title("Correlation b/w Educational Institutions and Population") subtitle("Khyber Pakhtunkhwa: Tehsils (adm3)")  note("Source: Mouza Census 2020 & WSF19")
+{res}{txt}
+{com}. graph export "$figures/combined_edu_scatter.png", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/combined_edu_scatter.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. *-------------------------------------------------------------------------------
+. *Health Services
+. 
+. *Hospitals and Dispenceries
+. 
+. twoway (scatter health_facilities  $pop , title("Hospitals & Population")  xtitle("Population (000s)") ytitle("Total Hospitals/Dispenceries")  name("graph_hospitals", replace) legend(off)) (lfit health_facilities $pop) 
+{res}{txt}
+{com}. 
+. graph export "$figures/health_facilities_population_scatter.png", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/health_facilities_population_scatter.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. *-------------------------------------------------------------------------------
+. *Wholesale markets
+. twoway (scatter  p6q1311_admin_fac $pop , title("Wholesale Markets & Population")  xtitle("Population (000s)") ytitle("Total Wholesale Markets")  name("graph_wholesalemkts", replace) legend(off)) (lfit p6q1311_admin_fac $pop) 
+{res}{txt}
+{com}. 
+. graph export "$figures/wholesalemkts_population_scatter.png", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/wholesalemkts_population_scatter.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. *-------------------------------------------------------------------------------
+. *Admin graphs combined
+. graph combine graph_hospitals graph_wholesalemkts, title("Correlation b/w Admin Facilities and Population") subtitle("Khyber Pakhtunkhwa: Tehsils (adm3)")  note("Source: Mouza Census 2020 & WSF19")
+{res}{txt}
+{com}. graph export "$figures/combined_admin_scatter.png", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/combined_admin_scatter.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. *-------------------------------------------------------------------------------
+. *-------------------------------------------------------------------------------
+. *-------------------------------------------------------------------------------
+. /*
+> Percentage of Mouza's with at least one of each education category (primary, middle, secondary, madrassa) and health category (dispensary, clinic, hospital)
+> */
+. graph drop _all
+{txt}
+{com}. use "$output/MouzaCensus_Cleaned.dta", clear
+{txt}
+{com}. 
+. *merging mouza-shapefile mapping   (Use this file to map mouza census tehsils to map Pak shapefile 2022 tehsils)
+. merge m:1 tehsil using "$output/tehsil_mouzatoshp2022.dta"    //9645 mouzas matched
+{res}
+{txt}{col 5}Result{col 33}Number of obs
+{col 5}{hline 41}
+{col 5}Not matched{col 30}{res}             128
+{txt}{col 9}from master{col 30}{res}             128{txt}  (_merge==1)
+{col 9}from using{col 30}{res}               0{txt}  (_merge==2)
+
+{col 5}Matched{col 30}{res}           9,645{txt}  (_merge==3)
+{col 5}{hline 41}
+
+{com}. keep if _m == 3
+{txt}(128 observations deleted)
+
+{com}. drop _m
+{txt}
+{com}. 
+. order ADM3_NAME ADM3_CODE
+{txt}
+{com}. 
+. *Combining with Tehsil level Popualtion numbers
+. merge m:1 ADM3_NAME using  "$output/population_number.dta"   , force   //same 133 tehsils matched
+{res}
+{txt}{col 5}Result{col 33}Number of obs
+{col 5}{hline 41}
+{col 5}Not matched{col 30}{res}              25
+{txt}{col 9}from master{col 30}{res}               0{txt}  (_merge==1)
+{col 9}from using{col 30}{res}              25{txt}  (_merge==2)
+
+{col 5}Matched{col 30}{res}           9,645{txt}  (_merge==3)
+{col 5}{hline 41}
+
+{com}. keep if _m == 3
+{txt}(25 observations deleted)
+
+{com}. drop _m
+{txt}
+{com}. 
+. order ADM2_NAME-DISP_AREA, before(ADM3_NAME)
+{txt}
+{com}. destring WPOP20, replace force
+{txt}WPOP20: all characters numeric; {res}replaced {txt}as {res}long
+{txt}
+{com}. 
+. gen NMDs = 1 if ADM2_NAME == "Bajaur" | ADM2_NAME == "Khyber" | ADM2_NAME == "Kurram" | ADM2_NAME == "Mohmand" | ADM2_NAME == "North Waziristan" | ADM2_NAME == "Orakzai" | ADM2_NAME == "South Waziristan" 
+{txt}(7,957 missing values generated)
+
+{com}. replace NMDs = 0 if NMDs == .
+{txt}(7,957 real changes made)
+
+{com}. 
+. drop district tehsil
+{txt}
+{com}. 
+. *save "output/clean_mouzacensus_shape_pop.dta", replace
+. 
+. glo educ_boys   "p4q1111 p4q1121 p4q1131  p4q1161"                       
+{txt}
+{com}. glo educ_girls  "p4q1211 p4q1221 p4q1231  p4q1261"                       
+{txt}
+{com}. 
+. *Boys
+. foreach var of varlist $educ_boys {c -(}
+{txt}  2{com}.         recode `var' (1=1 "Yes") (2=0 "No"), gen(`var'_education_boys)
+{txt}  3{com}.                 tab `var'_education, m
+{txt}  4{com}. {c )-}
+{txt}(2761 differences between {bf:p4q1111} and {bf:p4q1111_education_boys})
+
+  RECODE of {c |}
+    p4q1111 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      2,761       28.63       28.63
+{txt}        Yes {c |}{res}      6,790       70.40       99.03
+{txt}          . {c |}{res}         94        0.97      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,645      100.00
+{txt}(6278 differences between {bf:p4q1121} and {bf:p4q1121_education_boys})
+
+  RECODE of {c |}
+    p4q1121 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      6,278       65.09       65.09
+{txt}        Yes {c |}{res}      3,271       33.91       99.00
+{txt}          . {c |}{res}         96        1.00      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,645      100.00
+{txt}(7558 differences between {bf:p4q1131} and {bf:p4q1131_education_boys})
+
+  RECODE of {c |}
+    p4q1131 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      7,558       78.36       78.36
+{txt}        Yes {c |}{res}      1,993       20.66       99.03
+{txt}          . {c |}{res}         94        0.97      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,645      100.00
+{txt}(5431 differences between {bf:p4q1161} and {bf:p4q1161_education_boys})
+
+  RECODE of {c |}
+    p4q1161 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      5,431       56.31       56.31
+{txt}        Yes {c |}{res}      4,121       42.73       99.04
+{txt}          . {c |}{res}         93        0.96      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,645      100.00
+{txt}
+{com}. 
+. egen education_male = rowmean(p4q1111_education_boys-p4q1131_education_boys)
+{txt}(94 missing values generated)
+
+{com}. label var education_male "Education Accessibility - Boys"
+{txt}
+{com}. 
+. tab p4q1111_education_boys
+
+  {txt}RECODE of {c |}
+    p4q1111 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      2,761       28.91       28.91
+{txt}        Yes {c |}{res}      6,790       71.09      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,551      100.00
+{txt}
+{com}. tab p4q1121_education_boys
+
+  {txt}RECODE of {c |}
+    p4q1121 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      6,278       65.75       65.75
+{txt}        Yes {c |}{res}      3,271       34.25      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,549      100.00
+{txt}
+{com}. tab p4q1131_education_boys
+
+  {txt}RECODE of {c |}
+    p4q1131 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      7,558       79.13       79.13
+{txt}        Yes {c |}{res}      1,993       20.87      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,551      100.00
+{txt}
+{com}. tab p4q1161_education_boys
+
+  {txt}RECODE of {c |}
+    p4q1161 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      5,431       56.86       56.86
+{txt}        Yes {c |}{res}      4,121       43.14      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,552      100.00
+{txt}
+{com}. 
+. *Girls
+. foreach var of varlist $educ_girls {c -(}
+{txt}  2{com}.         recode `var' (1=1 "Yes") (2=0 "No"), gen(`var'_education_girls)
+{txt}  3{com}.                 tab `var'_education, m
+{txt}  4{com}. {c )-}
+{txt}(4329 differences between {bf:p4q1211} and {bf:p4q1211_education_girls})
+
+  RECODE of {c |}
+    p4q1211 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      4,329       44.88       44.88
+{txt}        Yes {c |}{res}      5,222       54.14       99.03
+{txt}          . {c |}{res}         94        0.97      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,645      100.00
+{txt}(7141 differences between {bf:p4q1221} and {bf:p4q1221_education_girls})
+
+  RECODE of {c |}
+    p4q1221 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      7,141       74.04       74.04
+{txt}        Yes {c |}{res}      2,409       24.98       99.02
+{txt}          . {c |}{res}         95        0.98      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,645      100.00
+{txt}(8324 differences between {bf:p4q1231} and {bf:p4q1231_education_girls})
+
+  RECODE of {c |}
+    p4q1231 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      8,324       86.30       86.30
+{txt}        Yes {c |}{res}      1,227       12.72       99.03
+{txt}          . {c |}{res}         94        0.97      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,645      100.00
+{txt}(6422 differences between {bf:p4q1261} and {bf:p4q1261_education_girls})
+
+  RECODE of {c |}
+    p4q1261 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      6,422       66.58       66.58
+{txt}        Yes {c |}{res}      3,130       32.45       99.04
+{txt}          . {c |}{res}         93        0.96      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,645      100.00
+{txt}
+{com}. 
+. egen education_female = rowmean(p4q1211_education_girls-p4q1231_education_girls)
+{txt}(94 missing values generated)
+
+{com}. label var education_female "Education Accessibility - Girls"
+{txt}
+{com}. 
+. tab p4q1211_education_girls
+
+  {txt}RECODE of {c |}
+    p4q1211 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      4,329       45.33       45.33
+{txt}        Yes {c |}{res}      5,222       54.67      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,551      100.00
+{txt}
+{com}. tab p4q1221_education_girls
+
+  {txt}RECODE of {c |}
+    p4q1221 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      7,141       74.77       74.77
+{txt}        Yes {c |}{res}      2,409       25.23      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,550      100.00
+{txt}
+{com}. tab p4q1231_education_girls
+
+  {txt}RECODE of {c |}
+    p4q1231 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      8,324       87.15       87.15
+{txt}        Yes {c |}{res}      1,227       12.85      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,551      100.00
+{txt}
+{com}. tab p4q1261_education_girls
+
+  {txt}RECODE of {c |}
+    p4q1261 {c |}
+(Educationa {c |}
+          l {c |}
+Institution {c |}
+ s in Mouza {c |}
+ In Case of {c |}
+       “No” {c |}
+write Dista {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      6,422       67.23       67.23
+{txt}        Yes {c |}{res}      3,130       32.77      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,552      100.00
+{txt}
+{com}. 
+. *Primary (Boys and Girls : District)
+. graph hbar (mean) p4q1211_education_girls p4q1111_education_boys if NMDs == 1, over(ADM2_NAME, sort(p4q1111_education_boys) descending) ytitle("Percentage (%)") title("Mouzas with Primary Schools (%)") subtitle("Newly Merged Districts")  note("Source: Mouza Census 2020") legend( label(1 "Girls") label(2 "Boys") )  name(primary_district_percent)
+{res}{txt}
+{com}. graph export "$figures/primary_district_percent.png", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/primary_district_percent.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. *Primary (Boys and Girls : Tehsils)
+. graph hbar (mean) p4q1211_education_girls p4q1111_education_boys if NMDs == 1, over(ADM3_NAME, sort(p4q1111_education_boys)  descending lab(labsize(tiny))) ytitle("Percentage (%)") title("Mouzas with Primary Schools (%)") subtitle("Newly Merged Tehsils")  legend( label(1 "Girls") label(2 "Boys") ) name(primary_tehsil_percent)  
+{res}{txt}
+{com}. graph export "$figures/primary_tehsil_percent.png", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/primary_tehsil_percent.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. *Middle (Boys and Girls : District)
+. graph hbar (mean) p4q1221_education_girls p4q1121_education_boys if NMDs == 1, over(ADM2_NAME, sort(p4q1121_education_boys) descending) ytitle("Percentage (%)") title("Mouzas with Middle Schools (%)") subtitle("Newly Merged Districts")  note("Source: Mouza Census 2020") legend( label(1 "Girls") label(2 "Boys") )  name(middle_district_percent)
+{res}{txt}
+{com}. graph export "$figures/middle_district_percent.png", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/middle_district_percent.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. *Middle (Boys and Girls : Tehsils)
+. graph hbar (mean) p4q1221_education_girls p4q1121_education_boys if NMDs == 1, over(ADM3_NAME, sort(p4q1121_education_boys)  descending lab(labsize(tiny))) ytitle("Percentage (%)") title("Mouzas with Middle Schools (%)") subtitle("Newly Merged Tehsils")  legend( label(1 "Girls") label(2 "Boys") ) name(middle_tehsil_percent)  
+{res}{txt}
+{com}. graph export "$figures/middle_tehsil_percent.png", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/middle_tehsil_percent.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. *Higher Secondary (Boys and Girls : District)
+. graph hbar (mean) p4q1231_education_girls p4q1131_education_boys if NMDs == 1, over(ADM2_NAME, sort(p4q1131_education_boys) descending) ytitle("Percentage (%)") title("Mouzas with Higher Secondary Schools (%)") subtitle("Newly Merged Districts")  note("Source: Mouza Census 2020") legend( label(1 "Girls") label(2 "Boys") )  name(secondary_district_percent)
+{res}{txt}
+{com}. graph export "$figures/secondary_tehsil_percent.png", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/secondary_tehsil_percent.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. *Higer Secondary (Boys and Girls : Tehsils)
+. graph hbar (mean) p4q1231_education_girls p4q1131_education_boys if NMDs == 1, over(ADM3_NAME, sort(p4q1131_education_boys)  descending lab(labsize(tiny))) ytitle("Percentage (%)") title("Mouzas with Higher Secondary Schools (%)") subtitle("Newly Merged Tehsils")  legend( label(1 "Girls") label(2 "Boys") ) name(secondary_tehsil_percent)  
+{res}{txt}
+{com}. graph export "$figures/secondary_tehsil_percent.png", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/secondary_tehsil_percent.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. 
+. 
+. *Higher Religious (Boys and Girls : District)
+. graph hbar (mean) p4q1261_education_girls p4q1161_education_boys if NMDs == 1, over(ADM2_NAME, sort(p4q1161_education_boys) descending) ytitle("Percentage (%)") title("Mouzas with Religious Schools (%)") subtitle("Newly Merged Districts")  note("Source: Mouza Census 2020") legend( label(1 "Girls") label(2 "Boys") )  name(Religious_district_percent)
+{res}{txt}
+{com}. graph export "$figures/Religious_tehsil_percent.png", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/Religious_tehsil_percent.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. *Higer Religious (Boys and Girls : Tehsils)
+. graph hbar (mean) p4q1261_education_girls p4q1161_education_boys if NMDs == 1, over(ADM3_NAME, sort(p4q1161_education_boys)  descending lab(labsize(tiny))) ytitle("Percentage (%)") title("Mouzas with Religious Schools (%)") subtitle("Newly Merged Tehsils")  legend( label(1 "Girls") label(2 "Boys") ) name(Religious_tehsil_percent)  
+{res}{txt}
+{com}. graph export "$figures/Religious_tehsil_percent.png", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/Religious_tehsil_percent.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. **Hospitals/Dispencaries: Tehsils)
+. glo health_fac "p3q0871"
+{txt}
+{com}. recode $health_fac (1=1 "Yes") (2=0 "No"), gen(health_facilities)
+{txt}(8267 differences between {bf:p3q0871} and {bf:health_facilities})
+
+{com}. label var health_facilities "Hospitals/Dispensary facility available"
+{txt}
+{com}. tab health_facilities,m
+
+{txt}Hospitals/D {c |}
+  ispensary {c |}
+   facility {c |}
+  available {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+         No {c |}{res}      8,267       85.71       85.71
+{txt}        Yes {c |}{res}      1,285       13.32       99.04
+{txt}          . {c |}{res}         93        0.96      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}      9,645      100.00
+{txt}
+{com}. 
+. graph hbar (mean) health_fac if NMDs == 1, over(ADM3_NAME, sort(health_fac)  descending lab(labsize(tiny))) ytitle("Percentage (%)") title("Mouzas with Hospitals/Dispencaries (%)") subtitle("Newly Merged Tehsils")  name(hospitals_tehsil_percent)  
+{res}{txt}
+{com}. graph export "$figures/hospitals_tehsil_percent.png", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/figures/hospitals_tehsil_percent.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. *-------------------------------------------------------------------------------
+. 
+{txt}end of do-file
+
+{com}.                 
+. 
 . *-------------------------------------------------------------------------------
 . *-------------------------------------------------------------------------------
 .         
@@ -786,7 +2884,7 @@ saved
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:/Users/wb578340/OneDrive - WBG/Documents/WB_FY2023/KPK Population Growth Analysis/KP_Pop_ServiceAccessibility_Project/log/logfile.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}22 Nov 2022, 23:33:43
+ {txt}closed on:  {res} 7 Dec 2022, 15:44:18
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}
