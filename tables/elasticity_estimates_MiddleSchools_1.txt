@@ -1,0 +1,12 @@
+	(1)
+VARIABLES	MiddleSchools
+	
+log_WSF19POP17	6.683***
+	(1.374)
+Constant	-56.69***
+	(15.26)
+	
+Observations	40
+R-squared	0.384
+Standard errors in parentheses	
+*** p<0.01, ** p<0.05, * p<0.1	

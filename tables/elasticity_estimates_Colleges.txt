@@ -1,0 +1,16 @@
+	(1)
+VARIABLES	Colleges
+	
+log_WSF19POP17	1.375***
+	(0.344)
+0b.NMDs#co.log_WSF19POP17	0
+	(0)
+1.NMDs#c.log_WSF19POP17	-0.235***
+	(0.0853)
+Constant	-11.28***
+	(4.189)
+	
+Observations	133
+R-squared	0.210
+Standard errors in parentheses	
+*** p<0.01, ** p<0.05, * p<0.1	

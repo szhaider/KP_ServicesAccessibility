@@ -1,0 +1,12 @@
+	(1)
+VARIABLES	Hospitals
+	
+log_WSF19POP17	2.443***
+	(0.799)
+Constant	-18.00*
+	(9.750)
+	
+Observations	93
+R-squared	0.093
+Standard errors in parentheses	
+*** p<0.01, ** p<0.05, * p<0.1	

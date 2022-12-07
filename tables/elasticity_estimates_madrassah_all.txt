@@ -1,0 +1,16 @@
+	(1)
+VARIABLES	Madrassahs
+	
+log_WSF19POP17	9.072**
+	(4.277)
+0b.NMDs#co.log_WSF19POP17	0
+	(0)
+1.NMDs#c.log_WSF19POP17	-2.841***
+	(1.060)
+Constant	-43.21
+	(52.03)
+	
+Observations	133
+R-squared	0.118
+Standard errors in parentheses	
+*** p<0.01, ** p<0.05, * p<0.1	

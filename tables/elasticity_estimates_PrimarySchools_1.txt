@@ -1,0 +1,12 @@
+	(1)
+VARIABLES	PrimarySchools
+	
+log_WSF19POP17	16.27***
+	(3.507)
+Constant	-138.4***
+	(38.93)
+	
+Observations	40
+R-squared	0.362
+Standard errors in parentheses	
+*** p<0.01, ** p<0.05, * p<0.1	
