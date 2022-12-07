@@ -16,7 +16,8 @@ Last modified:			November, 2022
 
 /*
 ----------------------------General Comments------------------------------------
-1. 
+1. 41 tehsis with 0 colleges (both boys + girls)
+2. Madresshas insignificant
 */
 
 *-------------------------------------------------------------------------------
@@ -29,6 +30,9 @@ Last modified:			November, 2022
 	cls
 	pause off
 	set maxvar 120000
+	
+	cap graph drop _all
+	matrix drop _all
 *-------------------------------------------------------------------------------
 
 *	A.2. Set the user and main paths:  (Plz adjust the paths according to the folder structure and your machine settings)
@@ -63,7 +67,9 @@ Last modified:			November, 2022
 	if `packages'{
 		ssc install outreg2
 		ssc install coefplot
+		
 	}
+	
 *-------------------------------------------------------------------------------
 *-------------------------------------------------------------------------------
 
@@ -87,6 +93,9 @@ Last modified:			November, 2022
 	
 *Elasticity of services to tehsil population projections 	
 	do 			"$do/ServicesElasticity.do"
+	
+*Descripitve Analytics
+	do           "do/descriptives.do"	
 
 *-------------------------------------------------------------------------------
 *-------------------------------------------------------------------------------
