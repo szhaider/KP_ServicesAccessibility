@@ -26,6 +26,11 @@ glo kppop WSF19POP17
 gen WSF19POP17_th = $kppop/1000
 glo pop WSF19POP17_th
 
+
+
+gen NMDs = 1 if ADM2_NAME == "Bajaur" | ADM2_NAME == "Khyber" | ADM2_NAME == "Kurram" | ADM2_NAME == "Mohmand" | ADM2_NAME == "North Waziristan" | ADM2_NAME == "Orakzai" | ADM2_NAME == "South Waziristan" 
+replace NMDs = 0 if NMDs == .
+tab NMDs,m             
 *-------------------------------------------------------------------------------
 *-------------------------------------------------------------------------------
 *-------------------------------------------------------------------------------
@@ -36,23 +41,40 @@ Scatter with Tehsil population and  each of the service categories
 */
 
 *--Primary schools
-twoway (scatter  pri_schl_tot $pop , title("Primary Schools & Population") xtitle("Population (000s)") ytitle("Total Primary Schools (Boys + Girls)") name("graph_primary", replace) legend(off)) (lfit pri_schl_tot $pop) 
 
-graph export "$figures/primary_population_scatter.png", replace
+local f0 = "red"
+local f1 = "blue"
+
+*twoway (scatter  pri_schl_tot $pop , title("Primary Schools & Population") xtitle("Population (000s)") ytitle("Total Primary Schools (Boys + Girls)") name("graph_primary", replace) legend(off)) (lfit pri_schl_tot $pop) 
+
+twoway (scatter pri_schl_tot $pop if NMDs==0, msymbol(Oh) mcolor(`f0') title("Primary Schools & Population") legend(label(1 "Other KP Tehsils") label(2 "Newly Merged Tehsils")) name("graph_primary", replace)) ///
+       (scatter pri_schl_tot $pop  if NMDs==1, msymbol(Oh) mcolor(`f1')  legend( label(1 "Other KP Tehsils") label(2 "Newly Merged Tehsils") ) ///
+	   ytitle("Total Primary Schools (Boys + Girls)") xtitle("Population (000s)")) ///
+	   (lfit pri_schl_tot $pop ) 
+	  graph export "$figures/primary_population_scatter.png", replace
 
 *--Middle schools
-twoway (scatter  mid_schl_tot $pop , title("Middle Schools & Population")  xtitle("Population (000s)") ytitle("Total Middle Schools (Boys + Girls)")  name("graph_middle", replace) legend(off)) (lfit mid_schl_tot $pop) 
-
+*twoway (scatter  mid_schl_tot $pop , title("Middle Schools & Population")  xtitle("Population (000s)") ytitle("Total Middle Schools (Boys + Girls)")  name("graph_middle", replace) legend(off)) (lfit mid_schl_tot $pop) 
+twoway (scatter mid_schl_tot $pop if NMDs==0, msymbol(Oh) mcolor(`f0') title("Middle Schools & Population") legend(label(1 "Other KP Tehsils") label(2 "Newly Merged Tehsils")) name("graph_middle", replace)) ///
+       (scatter mid_schl_tot $pop  if NMDs==1, msymbol(Oh) mcolor(`f1')  legend( label(1 "Other KP Tehsils") label(2 "Newly Merged Tehsils") ) ///
+	   ytitle("Total Middle Schools (Boys + Girls)") xtitle("Population (000s)")) ///
+	   (lfit mid_schl_tot $pop ) 
 graph export "$figures/middle_population_scatter.png", replace
 
 *--Higher Secondary schools
-twoway (scatter  sec_schl_tot $pop , title("Higher Secondary Schools & Population")  xtitle("Population (000s)") ytitle("Total Higher Secondary Schools (Boys + Girls)")  name("graph_secondary", replace) legend(off)) (lfit sec_schl_tot $pop) 
-
+*twoway (scatter  sec_schl_tot $pop , title("Higher Secondary Schools & Population")  xtitle("Population (000s)") ytitle("Total Higher Secondary Schools (Boys + Girls)")  name("graph_secondary", replace) legend(off)) (lfit sec_schl_tot $pop) 
+twoway (scatter sec_schl_tot $pop if NMDs==0, msymbol(Oh) mcolor(`f0')  title("Higher Secondary Schools & Population") legend(label(1 "Other KP Tehsils") label(2 "Newly Merged Tehsils")) name("graph_secondary", replace)) ///
+       (scatter sec_schl_tot $pop  if NMDs==1, msymbol(Oh) mcolor(`f1')  legend( label(1 "Other KP Tehsils") label(2 "Newly Merged Tehsils") ) ///
+	   ytitle("Total Secondary Schools (Boys + Girls)") xtitle("Population (000s)")) ///
+	   (lfit sec_schl_tot $pop ) 
 graph export "$figures/secondary_population_scatter.png", replace
 
 *--Colleges
-twoway (scatter col_tot  $pop , title("Colleges & Population") xtitle("Population (000s)") ytitle("Total Colleges (Boys + Girls)")  name("graph_colleges", replace) legend(off)) (lfit col_tot $pop) 
-
+*twoway (scatter col_tot  $pop , title("Colleges & Population") xtitle("Population (000s)") ytitle("Total Colleges (Boys + Girls)")  name("graph_colleges", replace) legend(off)) (lfit col_tot $pop) 
+twoway (scatter col_tot $pop if NMDs==0, msymbol(Oh) mcolor(`f0') title("Colleges & Population")legend(label(1 "Other KP Tehsils") label(2 "Newly Merged Tehsils")) name("graph_colleges", replace)) ///
+       (scatter col_tot $pop  if NMDs==1, msymbol(Oh) mcolor(`f1')  legend( label(1 "Other KP Tehsils") label(2 "Newly Merged Tehsils") ) ///
+	   ytitle("Total Colleges (Boys + Girls)") xtitle("Population (000s)")) ///
+	   (lfit col_tot $pop ) 
 graph export "$figures/colleges_population_scatter.png", replace
 
 graph combine graph_primary graph_middle graph_secondary graph_colleges, title("Correlation b/w Educational Institutions and Population") subtitle("Khyber Pakhtunkhwa: Tehsils (adm3)")  note("Source: Mouza Census 2020 & WSF19")
@@ -62,13 +84,21 @@ graph export "$figures/combined_edu_scatter.png", replace
 
 *Hospitals and Dispenceries
 
-twoway (scatter health_facilities  $pop , title("Hospitals & Population")  xtitle("Population (000s)") ytitle("Total Hospitals/Dispenceries")  name("graph_hospitals", replace) legend(off)) (lfit health_facilities $pop) 
+*twoway (scatter health_facilities  $pop , title("Hospitals & Population")  xtitle("Population (000s)") ytitle("Total Hospitals/Dispenceries")  name("graph_hospitals", replace) legend(off)) (lfit health_facilities $pop) 
 
+twoway (scatter health_facilities $pop if NMDs==0, msymbol(Oh) mcolor(`f0') title("Hospitals & Population") legend(label(1 "Other KP Tehsils") label(2 "Newly Merged Tehsils")) name("graph_hospitals", replace)) ///
+       (scatter health_facilities $pop  if NMDs==1, msymbol(Oh) mcolor(`f1')  legend( label(1 "Other KP Tehsils") label(2 "Newly Merged Tehsils") ) ///
+	   ytitle("Total Hospitals") xtitle("Population (000s)")) ///
+	   (lfit health_facilities $pop ) 
 graph export "$figures/health_facilities_population_scatter.png", replace
 *-------------------------------------------------------------------------------
 *Wholesale markets
-twoway (scatter  p6q1311_admin_fac $pop , title("Wholesale Markets & Population")  xtitle("Population (000s)") ytitle("Total Wholesale Markets")  name("graph_wholesalemkts", replace) legend(off)) (lfit p6q1311_admin_fac $pop) 
+*twoway (scatter  p6q1311_admin_fac $pop , title("Wholesale Markets & Population")  xtitle("Population (000s)") ytitle("Total Wholesale Markets")  name("graph_wholesalemkts", replace) legend(off)) (lfit p6q1311_admin_fac $pop) 
 
+twoway (scatter p6q1311_admin_fac $pop if NMDs==0, msymbol(Oh) mcolor(`f0') title("Wholesale Markets & Population") legend(label(1 "Other KP Tehsils") label(2 "Newly Merged Tehsils")) name("graph_wholesalemkts", replace)) ///
+       (scatter p6q1311_admin_fac $pop  if NMDs==1, msymbol(Oh) mcolor(`f1')  legend( label(1 "Other KP Tehsils") label(2 "Newly Merged Tehsils") ) ///
+	   ytitle("Total Wholesale Markets") xtitle("Population (000s)")) ///
+	   (lfit p6q1311_admin_fac $pop ) 
 graph export "$figures/wholesalemkts_population_scatter.png", replace
 
 *-------------------------------------------------------------------------------
@@ -155,7 +185,7 @@ graph export "$figures/middle_tehsil_percent.png", replace
 
 *Higher Secondary (Boys and Girls : District)
 graph hbar (mean) p4q1231_education_girls p4q1131_education_boys if NMDs == 1, over(ADM2_NAME, sort(p4q1131_education_boys) descending) ytitle("Percentage (%)") title("Mouzas with Higher Secondary Schools (%)") subtitle("Newly Merged Districts")  note("Source: Mouza Census 2020") legend( label(1 "Girls") label(2 "Boys") )  name(secondary_district_percent)
-graph export "$figures/secondary_tehsil_percent.png", replace
+graph export "$figures/secondary_district_percent.png", replace
 
 *Higer Secondary (Boys and Girls : Tehsils)
 graph hbar (mean) p4q1231_education_girls p4q1131_education_boys if NMDs == 1, over(ADM3_NAME, sort(p4q1131_education_boys)  descending lab(labsize(tiny))) ytitle("Percentage (%)") title("Mouzas with Higher Secondary Schools (%)") subtitle("Newly Merged Tehsils")  legend( label(1 "Girls") label(2 "Boys") ) name(secondary_tehsil_percent)  
@@ -176,6 +206,10 @@ glo health_fac "p3q0871"
 recode $health_fac (1=1 "Yes") (2=0 "No"), gen(health_facilities)
 label var health_facilities "Hospitals/Dispensary facility available"
 tab health_facilities,m
+
+
+graph hbar (mean) health_fac if NMDs == 1, over(ADM2_NAME, sort(health_fac)  descending lab(labsize(tiny))) ytitle("Percentage (%)") title("Mouzas with Hospitals/Dispencaries (%)") subtitle("Newly Merged Districts")  name(hospitals_district_percent)  
+graph export "$figures/hospitals_district_percent.png", replace
 
 graph hbar (mean) health_fac if NMDs == 1, over(ADM3_NAME, sort(health_fac)  descending lab(labsize(tiny))) ytitle("Percentage (%)") title("Mouzas with Hospitals/Dispencaries (%)") subtitle("Newly Merged Tehsils")  name(hospitals_tehsil_percent)  
 graph export "$figures/hospitals_tehsil_percent.png", replace
