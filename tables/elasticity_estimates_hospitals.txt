@@ -1,16 +1,18 @@
 	(1)
 VARIABLES	Hospitals
 	
-log_WSF19POP17	2.320***
-	(0.549)
+log_WSF19POP17	4.099***
+	(0.867)
 0b.NMDs#co.log_WSF19POP17	0
 	(0)
-1.NMDs#c.log_WSF19POP17	-0.378***
-	(0.136)
-Constant	-16.48**
-	(6.684)
+1.NMDs#c.log_WSF19POP17	-0.353***
+	(0.134)
+log_WSF19_Pop_densitysqkm	-2.066***
+	(0.789)
+Constant	-26.00***
+	(7.482)
 	
 Observations	133
-R-squared	0.223
+R-squared	0.262
 Standard errors in parentheses	
 *** p<0.01, ** p<0.05, * p<0.1	

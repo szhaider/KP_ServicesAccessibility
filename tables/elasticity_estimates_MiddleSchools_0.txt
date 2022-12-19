@@ -1,12 +1,14 @@
 	(1)
 VARIABLES	MiddleSchools
 	
-log_WSF19POP17	10.08***
-	(3.391)
-Constant	-68.66
-	(41.36)
+log_WSF19POP17	19.53***
+	(6.080)
+log_WSF19_Pop_densitysqkm	-8.778*
+	(4.714)
+Constant	-132.3**
+	(53.22)
 	
 Observations	93
-R-squared	0.088
+R-squared	0.122
 Standard errors in parentheses	
 *** p<0.01, ** p<0.05, * p<0.1	

@@ -1,12 +1,14 @@
 	(1)
 VARIABLES	SecondarySchools
 	
-log_WSF19POP17	7.866***
-	(2.101)
-Constant	-64.26**
-	(25.63)
+log_WSF19POP17	13.11***
+	(3.783)
+log_WSF19_Pop_densitysqkm	-4.870
+	(2.933)
+Constant	-99.55***
+	(33.11)
 	
 Observations	93
-R-squared	0.133
+R-squared	0.159
 Standard errors in parentheses	
 *** p<0.01, ** p<0.05, * p<0.1	

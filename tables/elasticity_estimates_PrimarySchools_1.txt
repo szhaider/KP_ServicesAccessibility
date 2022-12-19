@@ -1,10 +1,12 @@
 	(1)
 VARIABLES	PrimarySchools
 	
-log_WSF19POP17	16.27***
-	(3.507)
-Constant	-138.4***
-	(38.93)
+log_WSF19POP17	16.05***
+	(5.075)
+log_WSF19_Pop_densitysqkm	0.473
+	(7.510)
+Constant	-138.3***
+	(39.49)
 	
 Observations	40
 R-squared	0.362

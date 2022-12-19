@@ -1,16 +1,18 @@
 	(1)
 VARIABLES	WholesaleMarkets
 	
-log_WSF19POP17	0.561***
-	(0.187)
+log_WSF19POP17	0.866***
+	(0.301)
 0b.NMDs#co.log_WSF19POP17	0
 	(0)
-1.NMDs#c.log_WSF19POP17	-0.0697
+1.NMDs#c.log_WSF19POP17	-0.0654
 	(0.0464)
-Constant	-4.244*
-	(2.279)
+log_WSF19_Pop_densitysqkm	-0.354
+	(0.274)
+Constant	-5.875**
+	(2.601)
 	
 Observations	133
-R-squared	0.109
+R-squared	0.120
 Standard errors in parentheses	
 *** p<0.01, ** p<0.05, * p<0.1	
