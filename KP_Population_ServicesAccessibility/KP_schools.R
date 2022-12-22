@@ -1,5 +1,5 @@
 # This file converts KMZ files (GEE format ) into clean tidy datasets for validation of Mouza census schools data and results
-
+#And prepares a Final Data frame
 ###############################################################################
 
 library(sf)
@@ -26,8 +26,8 @@ kml_folders <- sapply(district_kmz,
 )
 
 districts_kmz <- paste0(list.files("../data/KP Schools Data/KML", 
-                            pattern = "*.kmz", 
-                            full.names = TRUE),"/doc.kml")
+                                   pattern = "*.kmz", 
+                                   full.names = TRUE),"/doc.kml")
 
 
 # district <- sapply(districts_kmz,
@@ -36,18 +36,17 @@ districts_kmz <- paste0(list.files("../data/KP Schools Data/KML",
 #                                  pattern = "*.kml",
 #                                 full.names = FALSE))
 
-
+#Reading KML files
 dist  <- lapply(districts_kmz, 
-                    function(x)
-                    read_sf(x)
-)
+                function(x)
+                  read_sf(x))
 
+#Converting all KMLs into a dataframe
 dist <- map_dfr(dist, bind_rows)
 ###############################################################################
 
 # torghar <- read_sf("../data/KP Schools Data/KML/Torghar.kmz/doc.kml")
 
-# Option a) Using a simple lapply
 attributes <- lapply(X = 1:nrow(dist), 
                      FUN = function(x) {
                        
@@ -66,7 +65,7 @@ attributes <- lapply(X = 1:nrow(dist),
                      })
 
 ###############################################################################
-
+#making a dataframe and cleaning
 kp_schools <- 
   map_dfr(attributes, bind_rows) %>% 
   rename(longitude = X, latitude = Y) %>% 
@@ -77,5 +76,28 @@ kp_schools <-
 #KP Schools GIS data in CSV Format for Econometric analysis and analytics
 kp_schools %>% 
   write_csv("../data/KP_Schools_GeoData.csv")
+
+
+#Making a table, at tehsil level on the number of schools at diff levels
+#To compare with MOuza census
+
+kp_schools %>%
+  count(district, tehsil, school_leve, school_gend) %>%
+  pivot_wider(names_from = c("school_leve", "school_gend") , values_from = n) %>% 
+  rio::export("../data/Number_of_Schools_GIS.xlsx")
+
+# View()
+
+
+#Abbottabad has 3 functional boys primary school in same village
+
+###############################################################################
+#Mouza census cover 9773,
+#lot of repitition in villages - spelling mistakes
+# Not much repitition in school names
+
+# kp_schools %>% mutate(school_name= str_remove_all(school_name, "GPS"), school_name= str_to_lower(school_name)) %>% arrange(school_name) %>%   distinct(school_name) %>% View()
+
+# kp_schools %>% mutate(village= str_to_lower(village)) %>% arrange(village) %>%   distinct(village) %>% View()
 
 ###############################################################################
