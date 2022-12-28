@@ -56,7 +56,6 @@ logistic_model_wt <-
 
 summary(logistic_model_wt)
 
-
 ##Number of classrooms - insignificnat in all models
 
 #Boundary Wall coef plot
