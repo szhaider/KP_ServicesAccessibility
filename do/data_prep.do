@@ -59,6 +59,7 @@ graph export "$figures/educ_gender.png", replace
 
 *Gender disparity can be seen at mouza level in terms of education accessibility among boys and girls
 
+twoway (scatter education_male education_female [w=p1q10]) (lfit education_male education_female), ytitle("Boys") xtitle("Girls") title("Positive correlation between girls & boys access' to education") subtitle("Mouza Census 2020")
 *-------------------------------------------------------------------------------
 *Health (Hospitals/Dispensary)   try other options too.
 glo health_fac "p3q0871"

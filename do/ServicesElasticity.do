@@ -49,11 +49,17 @@ drop _m
 order ADM2_NAME-DISP_AREA, before(ADM3_NAME)
 destring WPOP20, replace force
 
+drop Y
+
 *drop if ADM3_NAME == "Bar Chamarkand"     //outlier since number of schools < log pop and other services 0 (This is NMD tehsil!!!!!!!)
 
 gen NMDs = 1 if ADM2_NAME == "Bajaur" | ADM2_NAME == "Khyber" | ADM2_NAME == "Kurram" | ADM2_NAME == "Mohmand" | ADM2_NAME == "North Waziristan" | ADM2_NAME == "Orakzai" | ADM2_NAME == "South Waziristan" 
 replace NMDs = 0 if NMDs == .
-tab NMDs,m             //39 NMD tehsils
+tab NMDs,m             //40 NMD tehsils
+
+
+*to reverse coeff sign of interaction of pop and NMDs
+gen NMAs = NMDs == 0
 
 *-------------------------------------------------------------------------------
 
@@ -76,7 +82,6 @@ gen pop_gr2025  = ((WSF19_TehsilPop_2025 - WSF19POP17)/WSF19POP17)
 gen pop_gr2030  = ((WSF19_TehsilPop_2030 - WSF19POP17)/WSF19POP17)
 
 gen log_Adm3_Area_sqkm = log(Adm3_Area_sqkm)
-
 *-------------------------------------------------------------------------------
 
 *-------------------------------------------------------------------------------
@@ -87,7 +92,7 @@ global Models "PrimarySchools MiddleSchools SecondarySchools Colleges Hospitals 
 
 foreach var of varlist $Models {
 	
-	eststo `var' : reg `var' log_WSF19POP17 c.log_WSF19POP17#i.NMDs
+	eststo `var' : reg `var' log_WSF19POP17 c.log_WSF19POP17#i.NMDs log_WSF19_Pop_densitysqkm //absorb(NMDs)  nocons
 	
 	predict `var'_yhat, xb
 	predict `var'_delta, residuals
@@ -107,28 +112,30 @@ foreach var of varlist $Models {
 
 est dir
 *-------------------------------------------------------------------------------
-
 *Deltas Visualization for NMD tehsils in KP
-
-graph hbar PrimarySchools_delta PrimarySchools_delta_2025 PrimarySchools_delta_2030 if NMDs == 1, over(ADM3_NAME, sort(PrimarySchools_delta descending) lab(labsize(tiny))) ytitle("Predictions (number of primary schools)") title("Model Predictions: y-yhat") subtitle("Newly Merged Tehsils")  legend( label(1 "Primary Schools 2019") label(2 "Primary Schools 2025") label(3 "Primary Schools 2030") ) 
+*PrimarySchools_delta_2025 PrimarySchools_delta_2030
+graph hbar PrimarySchools_delta   if NMDs == 1, over(ADM3_NAME, sort(PrimarySchools_delta descending) lab(labsize(vsmall))) ytitle("Predictions (number of primary schools)") title("NMAs Model Predictions: y-yhat") 
+*subtitle("Newly Merged Tehsils")  
+*legend( label(1 "Primary Schools 2019") label(2 "Primary Schools 2025") label(3 "Primary Schools 2030") ) 
 graph export "$figures/primary_tehsil_deltas.png", replace  
 
-graph hbar MiddleSchools_delta MiddleSchools_delta_2025 MiddleSchools_delta_2030 if NMDs == 1, over(ADM3_NAME, sort(MiddleSchools_delta descending) lab(labsize(tiny))) ytitle("Predictions (number of middle schools)") title("Model Predictions: y-yhat") subtitle("Newly Merged Tehsils")  legend( label(1 "Middle Schools 2019") label(2 "Middle Schools 2025") label(3 "Midddle Schools 2030") ) 
+graph hbar MiddleSchools_delta  if NMDs == 1, over(ADM3_NAME, sort(MiddleSchools_delta descending) lab(labsize(vsmall))) ytitle("Predictions (number of middle schools)") title("NMAs Model Predictions: y-yhat") 
 graph export "$figures/middle_tehsil_deltas.png", replace  
 
-graph hbar SecondarySchools_delta SecondarySchools_delta_2025 SecondarySchools_delta_2030 if NMDs == 1, over(ADM3_NAME, sort(SecondarySchools_delta descending) lab(labsize(tiny))) ytitle("Predictions (number of secondary schools)") title("Model Predictions: y-yhat") subtitle("Newly Merged Tehsils")  legend( label(1 "Secondary Schools 2019") label(2 "Secondary Schools 2025") label(3 "Secondary Schools 2030") ) 
+graph hbar SecondarySchools_delta if NMDs == 1, over(ADM3_NAME, sort(SecondarySchools_delta descending) lab(labsize(vsmall))) ytitle("Predictions (number of secondary schools)") title("NMAs Model Predictions: y-yhat") 
 graph export "$figures/Secondary_tehsil_deltas.png", replace  
 
 
-graph hbar Hospitals_delta Hospitals_delta_2025 Hospitals_delta_2030 if NMDs == 1, over(ADM3_NAME, sort(Hospitals_delta descending) lab(labsize(tiny))) ytitle("Predictions (number of secondary schools)") title("Model Predictions: y-yhat") subtitle("Newly Merged Tehsils")  legend( label(1 "Hospitals 2019") label(2 "Hospitals 2025") label(3 "Hospitals 2030") ) 
+graph hbar Hospitals_delta if NMDs == 1, over(ADM3_NAME, sort(Hospitals_delta descending) lab(labsize(vsmall))) ytitle("Predictions (number of secondary schools)") title("NMAs Model Predictions: y-yhat") 
 graph export "$figures/hospitals_tehsil_deltas.png", replace  
 
 *-------------------------------------------------------------------------------
 *Coef plot for over all KP
 
 coefplot $Models , yline(0) vertical title("Elasticity Estimates (Log Linear)") ///
-ytitle("Change in basic services due to Population Growth (%)") drop(_cons) ///
-		  recast(bar) ciopts(recast(rcap)) citop barwidt(0.07) ///  subtitle("Controlling for NMDs Fixed Effect") 
+ytitle("Change in basic services due to Population Growth (%)") drop(_cons log_WSF19_Pop_densitysqkm) ///
+subtitle("Controlling for Tehsil Population Density (sq-km)")  ///
+		  recast(bar) ciopts(recast(rcap)) citop barwidt(0.07) ///  
 		  note("Source: Authors' calculations based on Mouza Census 2020 & WSF19")
 graph export "$figures/coefplot_allcategories.png", replace	
 *-------------------------------------------------------------------------------
@@ -144,7 +151,7 @@ foreach var of varlist $Models {
 	
 	foreach num of local NMD {
 	
-	eststo `var'_`num' : reg `var' log_WSF19POP17 if NMDs == `num' 
+	eststo `var'_`num' : reg `var' log_WSF19POP17 log_WSF19_Pop_densitysqkm if NMDs == `num'   // absorb(NMDs) 
 
 	outreg2 . using "$tables/elasticity_estimates_`var'_`num'.xls", replace
 	
@@ -182,9 +189,11 @@ coefplot  $Models_NMDs_4 , yline(0) vertical title("Elasticity Estimates (Log Li
 		  label(9 "WholesaleMarkets: Rest of KP") label(11 "WholesaleMarkets: NMDs") ) ///
 	
 graph export "$figures/coefplot_othercats_withand withoutNMDs.png", replace
-	
 *-------------------------------------------------------------------------------
 
+save "$output/model_predictions.dta", replace
+
+*-------------------------------------------------------------------------------
 
 *export excel using "$xlsx/facilities_needed_v1.xlsx" if NMDs == 1, first(variable) replace
 /* Rough
