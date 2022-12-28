@@ -12,6 +12,15 @@ drop _m
 
 order ADM3_NAME ADM3_CODE
 
+/*
+**** For Comparing Number of schools with GIS Data
+
+drop health_facilities p8q051_admin_fac p6q061_admin_fac p6q1311_admin_fac pri_schl_tot mid_schl_tot sec_schl_tot col_tot rel_schl_tot
+
+export excel "data/Number_of_Schools_Mouza.xls", first(variable) replace
+****
+*/
+
 *Combining with Tehsil level Popualtion numbers
 merge m:1 ADM3_NAME using  "$output/population_number.dta"   , force   //same 133 tehsils matched
 keep if _m == 3
@@ -215,3 +224,28 @@ graph hbar (mean) health_fac if NMDs == 1, over(ADM3_NAME, sort(health_fac)  des
 graph export "$figures/hospitals_tehsil_percent.png", replace
 
 *-------------------------------------------------------------------------------
+
+*Accessibility to energy
+
+*global fuel_avaialbility "p6q031 p6q032 p6q033 p6q034 p6q035 p6q036"
+
+recode p6q031 (1=1 "Yes") (.=0 "No"), gen(p6q031_fuelavailability)
+recode p6q032 (2=1 "Yes") (.=0 "No"), gen(p6q032_fuelavailability)
+recode p6q033 (3=1 "Yes") (.=0 "No"), gen(p6q033_fuelavailability)
+recode p6q034 (4=1 "Yes") (.=0 "No"), gen(p6q034_fuelavailability)
+recode p6q035 (5=1 "Yes") (.=0 "No"), gen(p6q035_fuelavailability)
+recode p6q036 (6=1 "Yes") (.=0 "No"), gen(p6q036_fuelavailability)
+
+
+egen fuel_score = rmean(p6q031_fuelavailability-p6q036_fuelavailability)
+
+tab p6q031_fuelavailability, m
+
+graph hbar (mean)  p6q032_fuelavailability    p6q036_fuelavailability if NMDs == 1, ///
+over(ADM3_NAME, sort(p6q036_fuelavailability descending lab(labsize(tiny)))) ///
+ytitle("Percentage (%)") title("Percentage of Mouzas with access to Sui Gas")
+
+**# Bookmark #1
+graph hbar (mean)  fuel_score  if NMDs == 1, ///
+over(ADM3_NAME, sort(fuel_score descending lab(labsize(tiny)))) ///
+ytitle("Percentage (%)") title("Percentage of Mouzas with access to Sui Gas")
