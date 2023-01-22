@@ -1,13 +1,13 @@
 	(1)
 VARIABLES	WholesaleMarkets
 	
-log_WSF19POP17	0.866***
-	(0.301)
-0b.NMDs#co.log_WSF19POP17	0
+logpop20	0.512***
+	(0.191)
+0b.NMDs#co.logpop20	0
 	(0)
-1.NMDs#c.log_WSF19POP17	-0.0654
+1.NMDs#c.logpop20	-0.0654
 	(0.0464)
-log_WSF19_Pop_densitysqkm	-0.354
+log_Adm3_Area_sqkm	0.354
 	(0.274)
 Constant	-5.875**
 	(2.601)

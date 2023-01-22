@@ -1,13 +1,13 @@
 	(1)
 VARIABLES	Hospitals
 	
-log_WSF19POP17	4.099***
-	(0.867)
-0b.NMDs#co.log_WSF19POP17	0
+logpop20	2.034***
+	(0.548)
+0b.NMDs#co.logpop20	0
 	(0)
-1.NMDs#c.log_WSF19POP17	-0.353***
+1.NMDs#c.logpop20	-0.353***
 	(0.134)
-log_WSF19_Pop_densitysqkm	-2.066***
+log_Adm3_Area_sqkm	2.066***
 	(0.789)
 Constant	-26.00***
 	(7.482)

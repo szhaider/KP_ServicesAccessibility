@@ -1,13 +1,13 @@
 	(1)
 VARIABLES	SecondarySchools
 	
-log_WSF19POP17	9.149***
-	(2.279)
-0b.NMDs#co.log_WSF19POP17	0
+logpop20	6.518***
+	(1.442)
+0b.NMDs#co.logpop20	0
 	(0)
-1.NMDs#c.log_WSF19POP17	-1.437***
+1.NMDs#c.logpop20	-1.437***
 	(0.351)
-log_WSF19_Pop_densitysqkm	-2.631
+log_Adm3_Area_sqkm	2.631
 	(2.076)
 Constant	-64.33***
 	(19.67)

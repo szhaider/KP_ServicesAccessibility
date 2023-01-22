@@ -1,13 +1,13 @@
 	(1)
 VARIABLES	Colleges
 	
-log_WSF19POP17	1.917***
-	(0.554)
-0b.NMDs#co.log_WSF19POP17	0
+logpop20	1.287***
+	(0.351)
+0b.NMDs#co.logpop20	0
 	(0)
-1.NMDs#c.log_WSF19POP17	-0.227***
+1.NMDs#c.logpop20	-0.227***
 	(0.0854)
-log_WSF19_Pop_densitysqkm	-0.630
+log_Adm3_Area_sqkm	0.630
 	(0.505)
 Constant	-14.18***
 	(4.783)

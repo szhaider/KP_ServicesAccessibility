@@ -1,6 +1,99 @@
 *Descriptive Analysis
 
 *-------------------------------------------------------------------------------
+
+*Population Census 2017 - Rural Urban disagg
+
+*Census 2017 Data (Urban share to total population)
+
+*import delimited "$xlsx/04_tehsil_aggregated_sex.csv", clear
+import delimited "$xlsx/04_tehsil_disaggregated.csv", clear
+
+split district, parse(" ") gen(district)
+drop district2-district4 district
+rename district1 district
+order district
+replace district = substr(district,1,1)+lower(substr(district,2,.))
+
+split tehsil_subdiv, parse(" ") gen(tehsil) 
+drop tehsil2-tehsil7 tehsil_subdiv
+rename tehsil1 tehsil
+order tehsil
+replace tehsil = substr(tehsil, 1,1) + lower(substr(tehsil, 2, .))
+
+
+replace age = "0" if age == "<1"
+
+ encode(age), gen(age1)
+ encode(sex), gen(sex1)
+ encode(district), gen(district1)
+ encode(tehsil), gen(tehsil1)
+ 
+gen id = _n
+gen id1 =  district1+tehsil1+sex1+age1
+
+
+*reshape wide rural urban total, i(age sex) j(tehsil) s
+
+collapse (sum) rural urban total ,by(age sex tehsil district)
+
+total(total)
+
+/*
+
+preserve
+
+use "$data/2017_censusblocks_prov", clear   //more tehsils in prov file than gender file , thats why we are left with 60 tehsils
+*keep if province == "KP"
+collapse (sum) pop hhs, by(province district tehsil urban)
+
+replace district = substr(district,1,1)+lower(substr(district,2,.))
+replace tehsil = substr(tehsil,1,1)+lower(substr(tehsil,2,.))
+
+tempfile prov_pop
+save `prov_pop', replace
+
+restore
+
+merge 1:m tehsil using `prov_pop'
+
+keep if _m == 3
+drop _m
+drop pop
+
+gen urban_ratio = urban / total
+
+keep if province == "KP"
+*/
+*-------------------------------------------------------------------------------
+*-------------------------------------------------------------------------------
+
+*Population Census 2017 - Rural Urban disagg
+
+use "$data/2017_censusblocks_prov", clear
+
+reshape wide pop hhs, i(block) j(urban)
+
+collapse (sum) pop0 pop1 hhs0 hhs1, by(province district tehsil)
+
+egen pop_total = rowtotal(pop0 pop1)
+
+*egen popt= sum(pop_total)  //okay 2.08e+08
+
+
+gen urban_ratio = pop1 / pop_total
+
+keep if province == "KP"
+
+gen pop = pop_total/1000
+
+twoway (scatter  pop urban_ratio, msymbol(Oh) mcolor() title("Urban ratio vs. Total population") subtitle("Khyber Pakhtunkhwa (Tehsils)") note("Source: Population Census 2017, PBS") xtitle("Urban Ratio") ytitle("Total Population (000s)")) 
+	  *(lfit  pop urban_ratio) 
+graph export "$figures/primary_population_scatter.png", replace
+
+*-------------------------------------------------------------------------------
+*-------------------------------------------------------------------------------
+
 graph drop _all
 *Reading Tehsil level sums for services (Education + Health + admin)
 use "$output/tehsillevel_services_sums.dta", clear
@@ -9,6 +102,8 @@ use "$output/tehsillevel_services_sums.dta", clear
 merge 1:m tehsil using "$output/tehsil_mouzatoshp2022.dta"    //same 133 tehsils matched
 keep if _m == 3
 drop _m
+
+keep if province == "KP"
 
 order ADM3_NAME ADM3_CODE
 
@@ -249,3 +344,6 @@ ytitle("Percentage (%)") title("Percentage of Mouzas with access to Sui Gas")
 graph hbar (mean)  fuel_score  if NMDs == 1, ///
 over(ADM3_NAME, sort(fuel_score descending lab(labsize(tiny)))) ///
 ytitle("Percentage (%)") title("Percentage of Mouzas with access to Sui Gas")
+
+
+********************************************************************************
