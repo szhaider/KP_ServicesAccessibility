@@ -52,7 +52,13 @@ destring WPOP20, replace force
 
 drop Y
 
+
+*>>>>>
+*drop if ADM3_NAME =="Razmak"
 *drop if ADM3_NAME == "Bar Chamarkand"     //outlier since number of schools < log pop and other services 0 (This is NMD tehsil!!!!!!!)
+drop if ADM3_NAME == "Kalam"   //dropping Kalam since its covered in WSF population data, but not available in mouza census, . Matched with "Shah Alam". Secondly, It has around 1100 poplation (too fewer people) but 284 schools - so clearly shah alam is not a typo for kalam  - dropped
+*<<<<<
+
 
 gen NMDs = 1 if ADM2_NAME == "Bajaur" | ADM2_NAME == "Khyber" | ADM2_NAME == "Kurram" | ADM2_NAME == "Mohmand" | ADM2_NAME == "North Waziristan" | ADM2_NAME == "Orakzai" | ADM2_NAME == "South Waziristan" 
 replace NMDs = 0 if NMDs == .
@@ -77,10 +83,15 @@ clonevar Markets = p6q061_admin_fac
 
 gen log_primary_schools = log(PrimarySchools)
 
+*WSF19
 gen logpop20 = log(WSF19POP17)
 gen logpop25 = log(WSF19_TehsilPop_2025)
 gen logpop30 = log(WSF19_TehsilPop_2030)
 
+*WPOP20
+gen logWpop20 = log(WPOP20)
+gen logWpop25 = log(WPOP20_TehsilPop_2025)
+gen logWpop30 = log(WPOP20_TehsilPop_2030)
 
 
 gen log_WSF19_Pop_densitysqkm = log(WSF19_Pop_densitysqkm)
@@ -116,6 +127,8 @@ foreach var of varlist $Models {
 *For population in 2025 & 2030 projections
 *Using the Population projections for 2025 and 2030 on the estimated elasticities for 2020
 
+estimates replay `var'
+
 foreach i of numlist 25 30 {
 gen `var'_`i' = round( e(b)[1,5]	+ 	 (e(b)[1,1] * logpop`i')  	+  ( e(b)[1,3]	* (logpop`i' * NMDs)) + (e(b)[1,4] * log_Adm3_Area_sqkm)  ) 
 //+ `var'_delta
@@ -136,13 +149,14 @@ subtitle("Controlling for Tehsil Area (sq-km)")  ///
 graph export "$figures/coefplot_allcategories.png", replace	
 *-------------------------------------------------------------------------------
 
-*gen PrimarySchools2030 = round( -131.6865	+ 	 (12.886732 * logpop30)  	+  (-4.6032306	* (logpop30 * NMDs)) + (13.714322 * log_Adm3_Area_sqkm) + PrimarySchools_delta )
-
 *-------------------------------------------------------------------------------
 *Predictions frontier (Population per schools benchmarking)- to see how far behind the tehsils are from top performers
 
 *Benchmark - Population per (should be) school (Population per (yhat) average umber of schools) not using predictions due to negatives
 *2020
+
+* Holding the population per school benchmark constant at 2020 levels - Otherwise we're allowing average schools to nearly double in capacity
+
  gen pop_per_pred_prim_school 	  = WSF19POP17 / PrimarySchools_yhat    
  gen pop_per_pred_midl_school 	  = WSF19POP17 / MiddleSchools_yhat   
  gen pop_per_pred_secd_school 	  = WSF19POP17 / SecondarySchools_yhat  
@@ -166,9 +180,14 @@ graph export "$figures/coefplot_allcategories.png", replace
  gen pop_per_pred_hospl_30	  	  = WSF19_TehsilPop_2030 / Hospitals_30
  gen pop_per_pred_makt_30		  = WSF19_TehsilPop_2030 / WholesaleMarkets_30
  
- drop if ADM3_NAME == "Bar Chamarkand"     //Since negative average due to very small population
-
+ drop if ADM3_NAME == "Bar Chamarkand"     //Since negative average due to very very small population - WSF issue to discuss
+ drop if ADM3_NAME == "Razmak" 
+ drop if ADM3_NAME == "Garyum"
+  drop if ADM3_NAME == "Ghulam Khan"
+  
  *2020
+	 
+	 
  global averages "pop_per_pred_prim_school pop_per_pred_midl_school pop_per_pred_secd_school pop_per_pred_colg pop_per_pred_hospl pop_per_pred_makt"
   
  foreach avg of varlist $averages {
@@ -181,7 +200,7 @@ graph export "$figures/coefplot_allcategories.png", replace
  
  preserve
  
- keep in 1/26   //10%    //10  26
+ keep in 1/25   //10%    //10  26
  
  *sum pop_per_pred_school
  sum `avg'
@@ -197,136 +216,92 @@ graph export "$figures/coefplot_allcategories.png", replace
  
  }
 
-*2025
-global averages2025 "pop_per_pred_prim_school_25 pop_per_pred_midl_school_25 pop_per_pred_secd_school_25 pop_per_pred_colg_25 pop_per_pred_hospl_25 pop_per_pred_makt_25"
-  
- foreach avg of varlist $averages2025 {
- 
- *gsort pop_per_pred_prim_school     // Kalam has 1168 people????
- gsort `avg'
- 
- *Taking average of top 20% of the tehsils as population per school benchmark for rural areas
- *list pop_per_pred_school in 1/26
- 
- preserve
- 
- keep in 1/26   //10%    //10  26
- 
- *sum pop_per_pred_school
- sum `avg'
- 
- local top =  r(mean)
- di "`top'"    //581.71 people / school
- 
- restore
-
- gen top_`avg' = r(mean)
- 
- label var top_`avg' "Population per predicted facililites - 2025 Benchmark"
- 
- } 
- 
-*2030
-global averages2030 "pop_per_pred_prim_school_30 pop_per_pred_midl_school_30 pop_per_pred_secd_school_30 pop_per_pred_colg_30 pop_per_pred_hospl_30 pop_per_pred_makt_30"
-  
- foreach avg of varlist $averages2030 {
- 
- *gsort pop_per_pred_prim_school     // Kalam has 1168 people????
- gsort `avg'
- 
- *Taking average of top 20% of the tehsils as population per school benchmark for rural areas
- *list pop_per_pred_school in 1/26
- 
- preserve
- 
- keep in 1/26   //10%    //10  26
- 
- *sum pop_per_pred_school
- sum `avg'
- 
- local top =  r(mean)
- di "`top'"    //581.71 people / school
- 
- restore
-
- gen top_`avg' = r(mean)
- 
- label var top_`avg' "Population per predicted facililites - 2030 Benchmark"
- 
- }  
-
- * Benchmark - Population per actual school
- gen pop_per_actual_prim_school = WSF19POP17 / PrimarySchools
- gen pop_per_actual_midl_school = WSF19POP17 / MiddleSchools
- gen pop_per_actual_secd_school = WSF19POP17 / SecondarySchools
- gen pop_per_actual_colg_school = WSF19POP17 / Colleges
- gen pop_per_actual_hospl       = WSF19POP17 / Hospitals
- gen pop_per_actual_makt        = WSF19POP17 / WholesaleMarkets    
-
-*global actual_fac "pop_per_actual_prim_school pop_per_actual_midl_school pop_per_actual_secd_school pop_per_actual_colg_school pop_per_actual_hospl pop_per_actual_makt"
- 
-*foreach act of varlist $actual_fac{
- 
- *gen pop_per_pred_school_diff =   pop_per_pred_school  - `prim'
- *gen `act'_diff =   $actual_fac  - `top'        // `avg'
 *2020 
- gen pop_per_actual_prim_school_diff = pop_per_actual_prim_school - top_pop_per_pred_prim_school
- gen pop_per_actual_midl_school_diff = pop_per_actual_midl_school - top_pop_per_pred_midl_school
- gen pop_per_actual_secd_school_diff = pop_per_actual_secd_school - top_pop_per_pred_secd_school
- gen pop_per_actual_colg_school_diff = pop_per_actual_colg_school - top_pop_per_pred_colg
- gen pop_per_actual_hospl_diff       = pop_per_actual_hospl       - top_pop_per_pred_hospl
- gen pop_per_actual_makt_diff        = pop_per_actual_makt        - top_pop_per_pred_makt    
+
+ gen pop_per_pred_prim_school_diff 	  =     pop_per_pred_prim_school -  top_pop_per_pred_prim_school
+ gen pop_per_pred_midl_school_diff 	  =     pop_per_pred_midl_school -  top_pop_per_pred_midl_school
+ gen pop_per_pred_secd_school_diff 	  =   	pop_per_pred_secd_school -	top_pop_per_pred_secd_school 
+ gen pop_per_pred_colg_diff 	  =   		pop_per_pred_colg -	        top_pop_per_pred_colg 
+ gen pop_per_pred_hospl_diff   =     		pop_per_pred_hospl -		top_pop_per_pred_hospl 
+ gen pop_per_pred_makt_diff 	  =   		pop_per_pred_makt -         top_pop_per_pred_makt
  
 *2025
- gen pop_per_act_prim_school_25_diff = pop_per_actual_prim_school - top_pop_per_pred_prim_school_25
- gen pop_per_act_midl_school_25_diff = pop_per_actual_midl_school - top_pop_per_pred_midl_school_25
- gen pop_per_act_secd_school_25_diff = pop_per_actual_secd_school - top_pop_per_pred_secd_school_25
- gen pop_per_act_colg_school_25_diff = pop_per_actual_colg_school - top_pop_per_pred_colg_25
- gen pop_per_act_hospl_25_diff       = pop_per_actual_hospl       - top_pop_per_pred_hospl_25
- gen pop_per_act_makt_25_diff        = pop_per_actual_makt        - top_pop_per_pred_makt_25
  
+ gen pop_per_pred_prim_school_25_diff =     pop_per_pred_prim_school_25 -   top_pop_per_pred_prim_school
+ gen pop_per_pred_midl_school_25_diff =     pop_per_pred_midl_school_25 -   top_pop_per_pred_midl_school
+ gen pop_per_pred_secd_school_25_diff =     pop_per_pred_secd_school_25 -   top_pop_per_pred_secd_school
+ gen pop_per_pred_colg_25_diff =     		pop_per_pred_colg -   top_pop_per_pred_colg
+ gen pop_per_pred_hospl_25_diff =   		pop_per_pred_hospl -  top_pop_per_pred_hospl
+ gen pop_per_pred_makt_25_diff =     		pop_per_pred_makt -   top_pop_per_pred_makt
+
 *2030
- gen pop_per_act_prim_school_30_diff = pop_per_actual_prim_school - top_pop_per_pred_prim_school_30
- gen pop_per_act_midl_school_30_diff = pop_per_actual_midl_school - top_pop_per_pred_midl_school_30
- gen pop_per_act_secd_school_30_diff = pop_per_actual_secd_school - top_pop_per_pred_secd_school_30
- gen pop_per_act_colg_school_30_diff = pop_per_actual_colg_school - top_pop_per_pred_colg_30
- gen pop_per_act_hospl_30_diff       = pop_per_actual_hospl       - top_pop_per_pred_hospl_30
- gen pop_per_act_makt_30_diff        = pop_per_actual_makt        - top_pop_per_pred_makt_30
  
- *gen new_prim_req = round(pop_per_pred_school_diff / `prim')    //Additinal schools required
- *gen new_req_`avg' = round(`avg'_diff / `top') 
+ gen pop_per_pred_prim_school_30_diff  =    pop_per_pred_prim_school_30  - top_pop_per_pred_prim_school 
+ gen pop_per_pred_midl_school_30_diff  =    pop_per_pred_midl_school_30  - top_pop_per_pred_midl_school 
+ gen pop_per_pred_secd_school_30_diff  =    pop_per_pred_secd_school_30  - top_pop_per_pred_secd_school 
+ gen pop_per_pred_colg_30_diff  =    		pop_per_pred_colg  - top_pop_per_pred_colg
+ gen pop_per_pred_hospl_30_diff =    		pop_per_pred_hospl - top_pop_per_pred_hospl
+ gen pop_per_pred_makt_30_diff  =    		pop_per_pred_makt  - top_pop_per_pred_makt
  
+
+
 *2020 
- gen req_pop_per_actual_prim_school = round(pop_per_actual_prim_school_diff / top_pop_per_pred_prim_school)   //use actual here instead   
- gen req_pop_per_actual_midl_school = round(pop_per_actual_midl_school_diff / top_pop_per_pred_midl_school)   //top_pop_per_pred_midl_school
- gen req_pop_per_actual_secd_school = round(pop_per_actual_secd_school_diff / top_pop_per_pred_secd_school)   //top_pop_per_pred_secd_school
- gen req_pop_per_actual_colg_school = round(pop_per_actual_colg_school_diff / top_pop_per_pred_colg)   //top_pop_per_pred_colg
- gen req_pop_per_actual_hospl       = round(pop_per_actual_hospl_diff       / top_pop_per_pred_hospl)   //top_pop_per_pred_hospl
- gen req_pop_per_actual_makt        = round(pop_per_actual_makt_diff        / top_pop_per_pred_makt)   // top_pop_per_pred_makt
+  gen req_pop_per_pred_prim_school =  round(pop_per_pred_prim_school_diff /   top_pop_per_pred_prim_school)   //top_pop_per_pred_prim_school   
+  gen req_pop_per_pred_midl_school =  round(pop_per_pred_midl_school_diff /   top_pop_per_pred_midl_school)   //top_pop_per_pred_prim_school   
+  gen req_pop_per_pred_secd_school =  round(pop_per_pred_secd_school_diff /   top_pop_per_pred_secd_school)   //top_pop_per_pred_prim_school   
+  gen req_pop_per_pred_colg =  		  round(pop_per_pred_colg_diff /   top_pop_per_pred_colg)   //top_pop_per_pred_prim_school   
+  gen req_pop_per_pred_hospl = 		  round(pop_per_pred_hospl_diff / top_pop_per_pred_hospl)   //top_pop_per_pred_prim_school   
+  gen req_pop_per_pred_makt =  		  round(pop_per_pred_makt_diff /   top_pop_per_pred_makt)   //top_pop_per_pred_prim_school   
+
  
- *2025
- gen req_pop_per_ac_prim_school_25  = round(pop_per_act_prim_school_25_diff  / top_pop_per_pred_prim_school_25)   //use actual here instead   
- gen req_pop_per_act_midl_school_25 = round(pop_per_act_midl_school_25_diff / top_pop_per_pred_midl_school_25)   //top_pop_per_pred_midl_school
- gen req_pop_per_act_secd_school_25 = round(pop_per_act_secd_school_25_diff / top_pop_per_pred_secd_school_25)   //top_pop_per_pred_secd_school
- gen req_pop_per_act_colg_school_25 = round(pop_per_act_colg_school_25_diff / top_pop_per_pred_colg_25)   //top_pop_per_pred_colg
- gen req_pop_per_act_hospl_25       = round(pop_per_act_hospl_25_diff       / top_pop_per_pred_hospl_25)   //top_pop_per_pred_hospl
- gen req_pop_per_act_makt_25        = round(pop_per_act_makt_25_diff        / top_pop_per_pred_makt_25)   // top_pop_per_pred_makt
+*2025 
+  gen req_pop_per_pred_prim_school_25 = round(pop_per_pred_prim_school_25_diff / top_pop_per_pred_prim_school)   //top_pop_per_pred_prim_school  
+  gen req_pop_per_pred_midl_school_25 = round(pop_per_pred_midl_school_25_diff / top_pop_per_pred_midl_school)   //top_pop_per_pred_prim_school  
+  gen req_pop_per_pred_secd_school_25 = round(pop_per_pred_secd_school_25_diff / top_pop_per_pred_secd_school)   //top_pop_per_pred_prim_school  
+  gen req_pop_per_pred_colg_25 = 	    round(pop_per_pred_colg_25_diff / top_pop_per_pred_colg)   //top_pop_per_pred_prim_school  
+  gen req_pop_per_pred_hospl_25 = 		round(pop_per_pred_hospl_25_diff / top_pop_per_pred_hospl)   //top_pop_per_pred_prim_school  
+  gen req_pop_per_pred_makt_25 = 		round(pop_per_pred_makt_25_diff / top_pop_per_pred_makt)   //top_pop_per_pred_prim_school  
+
  
- *2030
- gen req_pop_per_ac_prim_school_30 	= round(pop_per_act_prim_school_30_diff  / top_pop_per_pred_prim_school_30)   //use actual here instead   
- gen req_pop_per_act_midl_school_30 = round(pop_per_act_midl_school_30_diff / top_pop_per_pred_midl_school_30)   //top_pop_per_pred_midl_school
- gen req_pop_per_act_secd_school_30 = round(pop_per_act_secd_school_30_diff / top_pop_per_pred_secd_school_30)   //top_pop_per_pred_secd_school
- gen req_pop_per_act_colg_school_30 = round(pop_per_act_colg_school_30_diff / top_pop_per_pred_colg_30)   //top_pop_per_pred_colg
- gen req_pop_per_act_hospl_30       = round(pop_per_act_hospl_30_diff       / top_pop_per_pred_hospl_30)   //top_pop_per_pred_hospl
- gen req_pop_per_act_makt_30        = round(pop_per_act_makt_30_diff        / top_pop_per_pred_makt_30)   // top_pop_per_pred_makt
- 
+*2030 
+  gen req_pop_per_pred_prim_school_30 = round(pop_per_pred_prim_school_30_diff / top_pop_per_pred_prim_school)   //top_pop_per_pred_prim_school 
+  gen req_pop_per_pred_midl_school_30 = round(pop_per_pred_midl_school_30_diff / top_pop_per_pred_midl_school)   //top_pop_per_pred_prim_school 
+  gen req_pop_per_pred_secd_school_30 = round(pop_per_pred_secd_school_30_diff / top_pop_per_pred_secd_school)   //top_pop_per_pred_prim_school 
+  gen req_pop_per_pred_colg_30 =  		round(pop_per_pred_colg_30_diff / top_pop_per_pred_colg)   //top_pop_per_pred_prim_school 
+  gen req_pop_per_pred_hospl_30 =      	round(pop_per_pred_hospl_30_diff / top_pop_per_pred_hospl)   //top_pop_per_pred_prim_school 
+  gen req_pop_per_pred_makt_30 =  		round(pop_per_pred_makt_30_diff / top_pop_per_pred_makt)   //top_pop_per_pred_prim_school 
+
   *****
+*Not using increment since increments are 0 if 2025 and 2030 are same as 2020
 
+* gen incremet_prim_2025 = req_pop_per_pred_prim_school_25 - req_pop_per_pred_prim_school
+* gen incremet_prim_2030 = req_pop_per_pred_prim_school_30 - req_pop_per_pred_prim_school
+ 
+ 
+ *gen incremet_midl_2025 = req_pop_per_pred_midl_school_25 - req_pop_per_pred_midl_school
+ *gen incremet_midl_2030 = req_pop_per_pred_midl_school_30 - req_pop_per_pred_midl_school
+ 
+ *replace incremet_midl_2025 = abs(incremet_midl_2025) 
+ *replace incremet_midl_2030 = abs(incremet_midl_2030) 
+ *replace incremet_midl_2030 = 0 if (incremet_midl_2030 == incremet_midl_2025)    //because we are showing only increment
+ 
+  
+ *gen incremet_secd_2025 = req_pop_per_pred_secd_school_25 - req_pop_per_pred_secd_school
+ *gen incremet_secd_2030 = req_pop_per_pred_secd_school_30 - req_pop_per_pred_secd_school
+ 
+ *replace incremet_secd_2025 = abs(incremet_secd_2025) 
+ *replace incremet_secd_2030 = abs(incremet_secd_2030) 
+ 
+ *gen incremet_hospl_2025 = req_pop_per_pred_hospl_25 - req_pop_per_pred_hospl
+ *gen incremet_hospl_2030 = req_pop_per_pred_hospl_30 - req_pop_per_pred_hospl
+  
+ 
+ 
  preserve
  
- drop if req_pop_per_actual_prim_school <= 0 & NMDs == 1
+drop if req_pop_per_pred_prim_school == 0 & NMDs == 1
  
- graph hbar req_pop_per_actual_prim_school  req_pop_per_ac_prim_school_25 req_pop_per_ac_prim_school_30 if NMDs == 1, stack over(ADM3_NAME, sort(req_pop_per_actual_prim_school descending) ///
+ graph hbar req_pop_per_pred_prim_school  req_pop_per_pred_prim_school_25 req_pop_per_pred_prim_school_30 if NMDs == 1, stack over(ADM3_NAME, sort(req_pop_per_pred_prim_school descending) ///
  lab(labsize(vsmall))) ytitle("Additional primary schools required (rounded)") ///
  title("NMAs: Based on Model Averages (yhats)") ///
  subtitle("New Schools needed: To reach population per school benchmark") ///
@@ -340,9 +315,9 @@ global averages2030 "pop_per_pred_prim_school_30 pop_per_pred_midl_school_30 pop
  
  preserve
  
- drop if (req_pop_per_actual_midl_school <= 0 | req_pop_per_actual_midl_school==.) & NMDs == 1
+ *drop if (req_pop_per_pred_midl_school <= 0 | req_pop_per_pred_midl_school==.) & NMDs == 1
  
- graph hbar req_pop_per_actual_midl_school req_pop_per_act_midl_school_25  req_pop_per_act_midl_school_30 if NMDs == 1, stack over(ADM3_NAME, sort(req_pop_per_actual_midl_school descending) ///
+ graph hbar req_pop_per_pred_midl_school req_pop_per_pred_midl_school_25  req_pop_per_pred_midl_school_30 if NMDs == 1, stack over(ADM3_NAME, sort(req_pop_per_pred_midl_school req_pop_per_pred_midl_school descending) ///
  lab(labsize(vsmall))) ytitle("Additional middle schools required (rounded)") ///
  title("NMAs: Based on Model Averages (yhat)") ///
  subtitle("New Schools needed: To reach population per school benchmark")  ///
@@ -355,9 +330,10 @@ global averages2030 "pop_per_pred_prim_school_30 pop_per_pred_midl_school_30 pop
   *****
  preserve
  
-drop if (req_pop_per_actual_secd_school <= 0 | req_pop_per_actual_secd_school ==.) & NMDs == 1
+ drop if (req_pop_per_pred_secd_school <= 0 | req_pop_per_pred_secd_school ==.) & NMDs == 1
+*drop if (req_pop_per_pred_secd_school <= 0 | req_pop_per_pred_secd_school ==.) & NMDs == 1
  
- graph hbar req_pop_per_actual_secd_school req_pop_per_act_secd_school_25 req_pop_per_act_secd_school_30  if NMDs == 1, stack over(ADM3_NAME, sort(req_pop_per_actual_secd_school descending) ///
+ graph hbar req_pop_per_pred_secd_school req_pop_per_pred_secd_school_25 req_pop_per_pred_secd_school_30  if NMDs == 1, stack over(ADM3_NAME, sort(req_pop_per_pred_secd_school descending) ///
  lab(labsize(vsmall))) ytitle("Additional Higher Secondary schools required (rounded)") ///
  title("NMAs: Based on Model Averages (yhat)") ///
  subtitle("New Schools needed: To reach population per school benchmark") ///
@@ -371,13 +347,13 @@ drop if (req_pop_per_actual_secd_school <= 0 | req_pop_per_actual_secd_school ==
  ******
  preserve
  
-drop if (req_pop_per_actual_hospl <= 0 | req_pop_per_actual_hospl == .) & NMDs == 1
+drop if (req_pop_per_pred_hospl <= 0 | req_pop_per_pred_hospl == .) & NMDs == 1
  
- graph hbar req_pop_per_actual_hospl req_pop_per_act_hospl_25 req_pop_per_act_hospl_30  if NMDs == 1, stack over(ADM3_NAME, sort(req_pop_per_actual_hospl descending) ///
+ graph hbar req_pop_per_pred_hospl req_pop_per_pred_hospl_25 req_pop_per_pred_hospl_30  if NMDs == 1, stack over(ADM3_NAME, sort(req_pop_per_pred_hospl descending) ///
  lab(labsize(vsmall))) ytitle("Additional Hospitals/Dispencaries required (rounded)") ///
  title("NMAs: Based on Model Averages (yhat)") ///
  subtitle("To reach population per hospital benchmark") ///
- legend(label(1 "Base 2020") label(2 "Projected 2025") label(3 "Projected 2030"))
+ legend(label(1 "Base 2020") label(2 "Marginal 2025") label(3 "Marginal 2030"))
  
  graph export "$figures/hospitals_NMDs_additional.png", replace  
  
@@ -564,3 +540,185 @@ eststo Markets: reg Markets log_WSF19POP17 c.log_WSF19POP17#i.NMDs //log_WSF19_P
 outreg2 . using "$tables/elasticity_estimates_markets.xls", replace
 
 est dir
+
+
+* Holding the population per school benchmark constant at 2020 levels - Otherwise we're allowing average schools to nearly double in capacity
+
+ gen pop_per_pred_prim_school 	  = WSF19POP17 / PrimarySchools_yhat    
+ gen pop_per_pred_midl_school 	  = WSF19POP17 / MiddleSchools_yhat   
+ gen pop_per_pred_secd_school 	  = WSF19POP17 / SecondarySchools_yhat  
+ gen pop_per_pred_colg		  	  = WSF19POP17 / Colleges_yhat  
+ gen pop_per_pred_hospl	  	  	  = WSF19POP17 / Hospitals_yhat
+ gen pop_per_pred_makt 		  	  = WSF19POP17 / WholesaleMarkets_yhat
+ 
+ *2025
+* gen pop_per_pred_prim_school_25  = WSF19_TehsilPop_2025 / PrimarySchools_25    
+* gen pop_per_pred_midl_school_25  = WSF19_TehsilPop_2025 / MiddleSchools_25   
+* gen pop_per_pred_secd_school_25  = WSF19_TehsilPop_2025 / SecondarySchools_25  
+* gen pop_per_pred_colg_25		  = WSF19_TehsilPop_2025 / Colleges_25  
+* gen pop_per_pred_hospl_25	  	  = WSF19_TehsilPop_2025 / Hospitals_25
+* gen pop_per_pred_makt_25 		  = WSF19_TehsilPop_2025 / WholesaleMarkets_25
+
+ *2030
+* gen pop_per_pred_prim_school_30  = WSF19_TehsilPop_2030 / PrimarySchools_30   
+* gen pop_per_pred_midl_school_30  = WSF19_TehsilPop_2030 / MiddleSchools_30   
+* gen pop_per_pred_secd_school_30  = WSF19_TehsilPop_2030 / SecondarySchools_30  
+* gen pop_per_pred_colg_30		  = WSF19_TehsilPop_2030 / Colleges_30  
+* gen pop_per_pred_hospl_30	  	  = WSF19_TehsilPop_2030 / Hospitals_30
+* gen pop_per_pred_makt_30		  = WSF19_TehsilPop_2030 / WholesaleMarkets_30
+ 
+ drop if ADM3_NAME == "Bar Chamarkand"     //Since negative average due to very very small population - WSF issue to discuss
+
+ *2020
+ global averages "pop_per_pred_prim_school pop_per_pred_midl_school pop_per_pred_secd_school pop_per_pred_colg pop_per_pred_hospl pop_per_pred_makt"
+  
+ foreach avg of varlist $averages {
+ 
+ *gsort pop_per_pred_prim_school     // Kalam has 1168 people????
+ gsort `avg'
+ 
+ *Taking average of top 20% of the tehsils as population per school benchmark for rural areas
+ *list pop_per_pred_school in 1/26
+ 
+ preserve
+ 
+ keep in 1/26   //10%    //10  26
+ 
+ *sum pop_per_pred_school
+ sum `avg'
+ 
+ local top =  r(mean)
+ di "`top'"    //581.71 people / school
+ 
+ restore
+
+ gen top_`avg' = r(mean)
+ 
+ label var top_`avg' "Population per predicted facililites - Benchmark 2020"
+ 
+ }
+/*
+*2025
+global averages2025 "pop_per_pred_prim_school_25 pop_per_pred_midl_school_25 pop_per_pred_secd_school_25 pop_per_pred_colg_25 pop_per_pred_hospl_25 pop_per_pred_makt_25"
+  
+ foreach avg of varlist $averages2025 {
+ 
+ *gsort pop_per_pred_prim_school     // Kalam has 1168 people????
+ gsort `avg'
+ 
+ *Taking average of top 20% of the tehsils as population per school benchmark for rural areas
+ *list pop_per_pred_school in 1/26
+ 
+ preserve
+ 
+ keep in 1/26   //10%    //10  26
+ 
+ *sum pop_per_pred_school
+ sum `avg'
+ 
+ local top =  r(mean)
+ di "`top'"    //581.71 people / school
+ 
+ restore
+
+ gen top_`avg' = r(mean)
+ 
+ label var top_`avg' "Population per predicted facililites - 2025 Benchmark"
+ 
+ } 
+ 
+*2030
+global averages2030 "pop_per_pred_prim_school_30 pop_per_pred_midl_school_30 pop_per_pred_secd_school_30 pop_per_pred_colg_30 pop_per_pred_hospl_30 pop_per_pred_makt_30"
+  
+ foreach avg of varlist $averages2030 {
+ 
+ *gsort pop_per_pred_prim_school     // Kalam has 1168 people????
+ gsort `avg'
+ 
+ *Taking average of top 20% of the tehsils as population per school benchmark for rural areas
+ *list pop_per_pred_school in 1/26
+ 
+ preserve
+ 
+ keep in 1/26   //10%    //10  26
+ 
+ *sum pop_per_pred_school
+ sum `avg'
+ 
+ local top =  r(mean)
+ di "`top'"    //581.71 people / school
+ 
+ restore
+
+ gen top_`avg' = r(mean)
+ 
+ label var top_`avg' "Population per predicted facililites - 2030 Benchmark"
+ 
+ }  
+*/
+ * Benchmark - Population per actual school
+	 gen pop_per_actual_prim_school = WSF19POP17 / PrimarySchools
+	 gen pop_per_actual_midl_school = WSF19POP17 / MiddleSchools
+	 gen pop_per_actual_secd_school = WSF19POP17 / SecondarySchools
+	 gen pop_per_actual_colg_school = WSF19POP17 / Colleges
+	 gen pop_per_actual_hospl       = WSF19POP17 / Hospitals
+	 gen pop_per_actual_makt        = WSF19POP17 / WholesaleMarkets    
+
+	*global actual_fac "pop_per_actual_prim_school pop_per_actual_midl_school pop_per_actual_secd_school pop_per_actual_colg_school pop_per_actual_hospl pop_per_actual_makt"
+ 
+*foreach act of varlist $actual_fac{
+ 
+ *gen pop_per_pred_school_diff =   pop_per_pred_school  - `prim'
+ *gen `act'_diff =   $actual_fac  - `top'        // `avg'
+*2020 
+ gen pop_per_actual_prim_school_diff = pop_per_actual_prim_school - top_pop_per_pred_prim_school
+ gen pop_per_actual_midl_school_diff = pop_per_actual_midl_school - top_pop_per_pred_midl_school
+ gen pop_per_actual_secd_school_diff = pop_per_actual_secd_school - top_pop_per_pred_secd_school
+ gen pop_per_actual_colg_school_diff = pop_per_actual_colg_school - top_pop_per_pred_colg
+ gen pop_per_actual_hospl_diff       = pop_per_actual_hospl       - top_pop_per_pred_hospl
+ gen pop_per_actual_makt_diff        = pop_per_actual_makt        - top_pop_per_pred_makt    
+ 
+*2025
+ gen pop_per_act_prim_school_25_diff = pop_per_actual_prim_school - top_pop_per_pred_prim_school_25
+ gen pop_per_act_midl_school_25_diff = pop_per_actual_midl_school - top_pop_per_pred_midl_school_25
+ gen pop_per_act_secd_school_25_diff = pop_per_actual_secd_school - top_pop_per_pred_secd_school_25
+ gen pop_per_act_colg_school_25_diff = pop_per_actual_colg_school - top_pop_per_pred_colg_25
+ gen pop_per_act_hospl_25_diff       = pop_per_actual_hospl       - top_pop_per_pred_hospl_25
+ gen pop_per_act_makt_25_diff        = pop_per_actual_makt        - top_pop_per_pred_makt_25
+ 
+*2030
+ gen pop_per_act_prim_school_30_diff = pop_per_actual_prim_school - top_pop_per_pred_prim_school_30
+ gen pop_per_act_midl_school_30_diff = pop_per_actual_midl_school - top_pop_per_pred_midl_school_30
+ gen pop_per_act_secd_school_30_diff = pop_per_actual_secd_school - top_pop_per_pred_secd_school_30
+ gen pop_per_act_colg_school_30_diff = pop_per_actual_colg_school - top_pop_per_pred_colg_30
+ gen pop_per_act_hospl_30_diff       = pop_per_actual_hospl       - top_pop_per_pred_hospl_30
+ gen pop_per_act_makt_30_diff        = pop_per_actual_makt        - top_pop_per_pred_makt_30
+ 
+ *gen new_prim_req = round(pop_per_pred_school_diff / `prim')    //Additinal schools required
+ *gen new_req_`avg' = round(`avg'_diff / `top') 
+ 
+*2020 
+ gen req_pop_per_actual_prim_school = round(pop_per_actual_prim_school_diff / top_pop_per_pred_prim_school)   //use actual here instead   
+ gen req_pop_per_actual_midl_school = round(pop_per_actual_midl_school_diff / top_pop_per_pred_midl_school)   //top_pop_per_pred_midl_school
+ gen req_pop_per_actual_secd_school = round(pop_per_actual_secd_school_diff / top_pop_per_pred_secd_school)   //top_pop_per_pred_secd_school
+ gen req_pop_per_actual_colg_school = round(pop_per_actual_colg_school_diff / top_pop_per_pred_colg)   //top_pop_per_pred_colg
+ gen req_pop_per_actual_hospl       = round(pop_per_actual_hospl_diff       / top_pop_per_pred_hospl)   //top_pop_per_pred_hospl
+ gen req_pop_per_actual_makt        = round(pop_per_actual_makt_diff        / top_pop_per_pred_makt)   // top_pop_per_pred_makt
+ 
+ *2025
+ gen req_pop_per_ac_prim_school_25  = round(pop_per_act_prim_school_25_diff  / top_pop_per_pred_prim_school_25)   //use actual here instead   
+ gen req_pop_per_act_midl_school_25 = round(pop_per_act_midl_school_25_diff / top_pop_per_pred_midl_school_25)   //top_pop_per_pred_midl_school
+ gen req_pop_per_act_secd_school_25 = round(pop_per_act_secd_school_25_diff / top_pop_per_pred_secd_school_25)   //top_pop_per_pred_secd_school
+ gen req_pop_per_act_colg_school_25 = round(pop_per_act_colg_school_25_diff / top_pop_per_pred_colg_25)   //top_pop_per_pred_colg
+ gen req_pop_per_act_hospl_25       = round(pop_per_act_hospl_25_diff       / top_pop_per_pred_hospl_25)   //top_pop_per_pred_hospl
+ gen req_pop_per_act_makt_25        = round(pop_per_act_makt_25_diff        / top_pop_per_pred_makt_25)   // top_pop_per_pred_makt
+ 
+ *2030
+ gen req_pop_per_ac_prim_school_30 	= round(pop_per_act_prim_school_30_diff  / top_pop_per_pred_prim_school_30)   //use actual here instead   
+ gen req_pop_per_act_midl_school_30 = round(pop_per_act_midl_school_30_diff / top_pop_per_pred_midl_school_30)   //top_pop_per_pred_midl_school
+ gen req_pop_per_act_secd_school_30 = round(pop_per_act_secd_school_30_diff / top_pop_per_pred_secd_school_30)   //top_pop_per_pred_secd_school
+ gen req_pop_per_act_colg_school_30 = round(pop_per_act_colg_school_30_diff / top_pop_per_pred_colg_30)   //top_pop_per_pred_colg
+ gen req_pop_per_act_hospl_30       = round(pop_per_act_hospl_30_diff       / top_pop_per_pred_hospl_30)   //top_pop_per_pred_hospl
+ gen req_pop_per_act_makt_30        = round(pop_per_act_makt_30_diff        / top_pop_per_pred_makt_30)   // top_pop_per_pred_makt
+ 
+  *****

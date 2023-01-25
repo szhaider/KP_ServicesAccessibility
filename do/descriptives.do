@@ -87,8 +87,14 @@ keep if province == "KP"
 
 gen pop = pop_total/1000
 
-twoway (scatter  pop urban_ratio, msymbol(Oh) mcolor() title("Urban ratio vs. Total population") subtitle("Khyber Pakhtunkhwa (Tehsils)") note("Source: Population Census 2017, PBS") xtitle("Urban Ratio") ytitle("Total Population (000s)")) 
+gen tribal = 1 if tehsil == "TRIBAL AREA ADJ. BANNU" | tehsil == "TRIBAL AREA ADJ. DERA ISMAIL KHAN" | tehsil == "TRIBAL AREA ADJ. KOHAT" | tehsil == "TRIBAL AREA ADJ. LAKKI MARWAT" | tehsil == "TRIBAL AREA ADJ. PESHAWAR" | tehsil == "TRIBAL AREA ADJ. TANK" 
+
+replace tribal =0 if tribal == .
+
+twoway (scatter  pop urban_ratio , msymbol(Oh) mcolor() title("Urban ratio vs. Total population") subtitle("Khyber Pakhtunkhwa (Tehsils)") note("Source: Population Census 2017, PBS") xtitle("Urban Ratio") ytitle("Total Population (000s)")) 
 	  *(lfit  pop urban_ratio) 
+	  
+	  
 graph export "$figures/primary_population_scatter.png", replace
 
 *-------------------------------------------------------------------------------

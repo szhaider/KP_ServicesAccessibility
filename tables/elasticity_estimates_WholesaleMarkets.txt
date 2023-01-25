@@ -1,18 +1,18 @@
 	(1)
 VARIABLES	WholesaleMarkets
 	
-logpop20	0.512***
-	(0.191)
+logpop20	0.934***
+	(0.188)
 0b.NMDs#co.logpop20	0
 	(0)
-1.NMDs#c.logpop20	-0.0654
-	(0.0464)
-log_Adm3_Area_sqkm	0.354
-	(0.274)
-Constant	-5.875**
-	(2.601)
+1.NMDs#c.logpop20	-0.0247
+	(0.0425)
+log_Adm3_Area_sqkm	0.0311
+	(0.254)
+Constant	-9.103***
+	(2.417)
 	
-Observations	133
-R-squared	0.120
+Observations	132
+R-squared	0.211
 Standard errors in parentheses	
 *** p<0.01, ** p<0.05, * p<0.1	
