@@ -1,18 +1,17 @@
 	(1)
 VARIABLES	Hospitals
 	
-logpop20	3.055***
-	(0.560)
+logpop20	3.113***
+	(0.765)
 0b.NMDs#co.logpop20	0
 	(0)
-1.NMDs#c.logpop20	-0.255**
-	(0.126)
-log_Adm3_Area_sqkm	1.284*
-	(0.757)
-Constant	-33.80***
-	(7.192)
+1.NMDs#c.logpop20	-0.392***
+	(0.133)
+log_Adm3_Area_sqkm	1.637*
+	(0.942)
+Constant	-32.01***
+	(10.81)
 	
 Observations	132
-R-squared	0.328
-Standard errors in parentheses	
+Robust standard errors in parentheses	
 *** p<0.01, ** p<0.05, * p<0.1	

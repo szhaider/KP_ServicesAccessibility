@@ -1,18 +1,17 @@
 	(1)
 VARIABLES	MiddleSchools
 	
-logpop20	14.21***
-	(2.249)
+logpop20	16.12***
+	(3.067)
 0b.NMDs#co.logpop20	0
 	(0)
-1.NMDs#c.logpop20	-1.767***
-	(0.508)
-log_Adm3_Area_sqkm	2.164
-	(3.039)
-Constant	-134.0***
-	(28.89)
+1.NMDs#c.logpop20	-2.337***
+	(0.706)
+log_Adm3_Area_sqkm	2.136
+	(4.829)
+Constant	-141.9***
+	(34.63)
 	
 Observations	132
-R-squared	0.407
-Standard errors in parentheses	
+Robust standard errors in parentheses	
 *** p<0.01, ** p<0.05, * p<0.1	

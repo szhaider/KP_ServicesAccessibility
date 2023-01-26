@@ -1,18 +1,17 @@
 	(1)
 VARIABLES	Colleges
 	
-logpop20	1.774***
-	(0.370)
+logpop20	2.126***
+	(0.715)
 0b.NMDs#co.logpop20	0
 	(0)
-1.NMDs#c.logpop20	-0.180**
-	(0.0837)
-log_Adm3_Area_sqkm	0.258
-	(0.500)
-Constant	-17.90***
-	(4.757)
+1.NMDs#c.logpop20	-0.291**
+	(0.112)
+log_Adm3_Area_sqkm	0.107
+	(0.829)
+Constant	-18.58**
+	(8.934)
 	
 Observations	132
-R-squared	0.263
-Standard errors in parentheses	
+Robust standard errors in parentheses	
 *** p<0.01, ** p<0.05, * p<0.1	
