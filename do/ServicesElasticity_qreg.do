@@ -173,7 +173,7 @@ graph export "$figures/coefplot_allcategories.png", replace
  
  preserve
  
-drop if NewPrimarySchools_20 == 0   & NMDs == 1
+drop if (NewPrimarySchools_20 == 0 & marginal_NewPrimarySchools_25 == 0 &  marginal_NewPrimarySchools_30 ==0) & NMDs == 1
  
  graph hbar NewPrimarySchools_20  marginal_NewPrimarySchools_25 marginal_NewPrimarySchools_30 if NMDs == 1, stack over(ADM3_NAME, sort(NewPrimarySchools_20 descending) ///
  lab(labsize(vsmall))) ytitle("Additional primary schools required") ///
@@ -188,7 +188,7 @@ drop if NewPrimarySchools_20 == 0   & NMDs == 1
  
  preserve
  
- drop if NewMiddleSchools_20 == 0 & NMDs == 1
+ drop if (marginal_NewMiddleSchools_25 | marginal_NewMiddleSchools_30) == 0 & NMDs == 1
  
  graph hbar NewMiddleSchools_20 marginal_NewMiddleSchools_25 marginal_NewMiddleSchools_30   if NMDs == 1, stack over(ADM3_NAME, sort(NewMiddleSchools_20 descending) ///
  lab(labsize(vsmall))) ytitle("Additional middle schools required") ///
@@ -202,7 +202,7 @@ drop if NewPrimarySchools_20 == 0   & NMDs == 1
   *****
  preserve
  
- drop if  NewSecondarySchools_20 == 0 & NMDs == 1
+ drop if  (NewSecondarySchools_20 == 0 & marginal_NewSecondarySchools_25 == 0 & marginal_NewSecondarySchools_30 == 0) & NMDs == 1
  
  graph hbar  NewSecondarySchools_20 marginal_NewSecondarySchools_25 marginal_NewSecondarySchools_30  if NMDs == 1, stack over(ADM3_NAME, sort(NewSecondarySchools_20 descending) ///
  lab(labsize(vsmall))) ytitle("Additional Higher Secondary schools required") ///
@@ -217,7 +217,7 @@ drop if NewPrimarySchools_20 == 0   & NMDs == 1
  ******
  preserve
  
-drop if NewHospitals_20 == 0  & NMDs == 1
+drop if (NewHospitals_20 == 0  & marginal_NewHospitals_25== 0  & marginal_NewHospitals_30 ==0) & NMDs == 1
  
  graph hbar NewHospitals_20   marginal_NewHospitals_25 marginal_NewHospitals_30 if NMDs == 1, stack over(ADM3_NAME, sort(NewHospitals_20 descending) ///
  lab(labsize(vsmall))) ytitle("Additional Hospitals/Dispencaries required") ///
