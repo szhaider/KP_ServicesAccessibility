@@ -131,7 +131,6 @@ estimates replay `var'
 
 foreach i of numlist 25 30 {
 gen `var'_`i' = round( e(b)[1,5]	+ 	 (e(b)[1,1] * logpop`i')  	+  ( e(b)[1,3]	* (logpop`i' * NMDs)) + (e(b)[1,4] * log_Adm3_Area_sqkm)  ) 
-//+ `var'_delta
 	}
 	
 }
@@ -144,20 +143,26 @@ rename *_yhat *_20
 foreach var of varlist $Models {
 	foreach i of numlist 20 25 30 {
 gen New`var'_`i'= `var'_`i'- `var'
-replace New`var'_`i'=0 if New`var'_`i'<0
+replace New`var'_`i'=0 if New`var'_`i'< 0
 
 	}
 }
 
-*Marginal facilities needed
+*Marginal facilities needed - 2020 to 2025 & 2025 to 2030 
 local NewModels "NewPrimarySchools NewMiddleSchools NewSecondarySchools NewColleges NewHospitals NewWholesaleMarkets"
 
 foreach var of  local NewModels {
 
-foreach i of numlist 25 30{
-	gen marginal_`var'_`i' = `var'_`i' - `var'_20
-	}
+	gen marginal_`var'_25 = `var'_25 - `var'_20
 
+*foreach i of numlist 25 30{
+*	gen marginal_`var'_`i' = `var'_`i' - `var'_20
+*	}
+}
+
+foreach var of  local NewModels {
+    
+	gen marginal_`var'_30 = `var'_30 - `var'_25
 }
 
 *-------------------------------------------------------------------------------
@@ -177,7 +182,7 @@ drop if (NewPrimarySchools_20 == 0 & marginal_NewPrimarySchools_25 == 0 &  margi
  
  graph hbar NewPrimarySchools_20  marginal_NewPrimarySchools_25 marginal_NewPrimarySchools_30 if NMDs == 1, stack over(ADM3_NAME, sort(NewPrimarySchools_20 descending) ///
  lab(labsize(vsmall))) ytitle("Additional primary schools required") ///
- title("NMAs: Based on Model Averages (yhats)") ///
+ title("NMAs: Based on Model Predictions") ///
  legend(label(1 "Base 2020") label(2 "Projected 2025") label(3 "Projected 2030"))
  
  graph export "$figures/primary_NMDs_additional.png", replace  
@@ -192,7 +197,7 @@ drop if (NewPrimarySchools_20 == 0 & marginal_NewPrimarySchools_25 == 0 &  margi
  
  graph hbar NewMiddleSchools_20 marginal_NewMiddleSchools_25 marginal_NewMiddleSchools_30   if NMDs == 1, stack over(ADM3_NAME, sort(NewMiddleSchools_20 descending) ///
  lab(labsize(vsmall))) ytitle("Additional middle schools required") ///
- title("NMAs: Based on Model Averages (yhat)") ///
+ title("NMAs: Based on Model Predictions") ///
  legend(label(1 "Base 2020") label(2 "Projected 2025") label(3 "Projected 2030"))
  
  graph export "$figures/middle_NMDs_additional.png", replace  
@@ -206,7 +211,7 @@ drop if (NewPrimarySchools_20 == 0 & marginal_NewPrimarySchools_25 == 0 &  margi
  
  graph hbar  NewSecondarySchools_20 marginal_NewSecondarySchools_25 marginal_NewSecondarySchools_30  if NMDs == 1, stack over(ADM3_NAME, sort(NewSecondarySchools_20 descending) ///
  lab(labsize(vsmall))) ytitle("Additional Higher Secondary schools required") ///
- title("NMAs: Based on Model Averages (yhat)") ///
+ title("NMAs: Based on Model Predictions") ///
  legend(label(1 "Base 2020") label(2 "Projected 2025") label(3 "Projected 2030"))
  
  
@@ -221,7 +226,7 @@ drop if (NewHospitals_20 == 0  & marginal_NewHospitals_25== 0  & marginal_NewHos
  
  graph hbar NewHospitals_20   marginal_NewHospitals_25 marginal_NewHospitals_30 if NMDs == 1, stack over(ADM3_NAME, sort(NewHospitals_20 descending) ///
  lab(labsize(vsmall))) ytitle("Additional Hospitals/Dispencaries required") ///
- title("NMAs: Based on Model Averages (yhat)") ///
+ title("NMAs: Based on Model Predictions") ///
  legend(label(1 "Base 2020") label(2 "Marginal 2025") label(3 "Marginal 2030"))
  
  graph export "$figures/hospitals_NMDs_additional.png", replace  
